@@ -1,1 +1,156 @@
-<p>signup works!</p>
+<div class="min-h-screen bg-background relative flex flex-col items-center justify-center p-6 md:p-4 pt-10 md:pt-4">
+
+  <!-- Taskly Logo -->
+  <div class="w-full max-w-xl flex justify-start mb-8 md:absolute md:top-8 md:left-8 md:mb-0">
+    <div class="flex items-center gap-2 md:pl-4 md:pt-4">
+      <img src="/assets/logos/taskly-logo.svg" alt="Taskly Logo" class="w-7 h-7">
+      <span class="text-title-md text-slate-dark font-bold tracking-widest uppercase">Taskly</span>
+    </div>
+  </div>
+
+  <!-- Form Container (Transparent on mobile, White Card on desktop) -->
+  <div
+    class="w-full max-w-xl bg-transparent md:bg-white md:rounded-xl md:shadow-sm p-0 md:p-10 flex flex-col gap-8">
+
+    <!-- Header (Left aligned on mobile, Centered on desktop) -->
+    <div class="flex flex-col items-start md:items-center gap-2 text-left md:text-center">
+      <h1 class="text-headline-lg text-slate-dark">Create your workspace</h1>
+      <p class="text-body-md text-slate-medium">Join the curated environment for institutional trust and task
+        precision.</p>
+    </div>
+
+    <!-- Reactive Form -->
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+
+      <!-- Name Field -->
+      <app-input
+        label="Full Name"
+        inputId="name"
+        placeholder="Enter your full name"
+        [control]="$any(formControls['name'])">
+
+        <!-- Custom Errors -->
+        @if (formControls['name'].invalid && formControls['name'].touched) {
+          <span class="text-xs text-semantic-error">
+            @if (formControls['name'].errors?.['required']) {
+              Name is required.
+            }
+            @if (formControls['name'].errors?.['minlength'] || formControls['name'].errors?.['maxlength']) {
+              Must be between 3 and 50 characters.
+            }
+            @if (formControls['name'].errors?.['pattern']) {
+              Letters only. No numbers, symbols, or consecutive spaces.
+            }
+          </span>
+        } @else {
+          <span class="text-xs text-slate-light">3-50 characters, letters only.</span>
+        }
+      </app-input>
+
+      <!-- Email Field -->
+      <app-input
+        label="Email"
+        inputId="email"
+        type="email"
+        placeholder="yourname@company.com"
+        [control]="$any(formControls['email'])">
+
+        @if (formControls['email'].invalid && formControls['email'].touched) {
+          <span class="text-xs text-semantic-error">Please enter a valid email address.</span>
+        }
+      </app-input>
+
+      <!-- Job Title Field -->
+      <app-input
+        label="Job Title"
+        inputId="jobTitle"
+        type="text"
+        placeholder="e.g. Project Manager"
+        [control]="$any(formControls['jobTitle'])"
+      ></app-input>
+
+      <!-- Password Grid (Stacks on mobile, side-by-side on desktop) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Password Field -->
+        <app-input
+          label="Password"
+          inputId="password"
+          type="password"
+          placeholder="Password"
+          [control]="$any(formControls['password'])"
+        >
+        </app-input>
+
+        <!-- Confirm Password Field -->
+        <app-input
+          label="Confirm Password"
+          inputId="confirmPassword"
+          type="password"
+          placeholder="Repeat your password"
+          [control]="$any(formControls['confirmPassword'])"
+        >
+        </app-input>
+
+      </div>
+
+      <!-- Cross-Field Password Errors -->
+      @if (formControls['confirmPassword'].hasError('mismatch') && formControls['confirmPassword'].touched) {
+        <span class="text-xs text-semantic-error -mt-3">Passwords do not match.</span>
+      }
+      @if (formControls['password'].errors?.['hasWhiteSpace'] && formControls['password'].touched) {
+        <span class="text-xs text-semantic-error -mt-3">Password cannot contain spaces.</span>
+      }
+
+      <!-- Password Validation Checklist Box -->
+      <div class="bg-surface-highest rounded-md p-4 mt-1">
+        <ul class="text-[12px] font-medium flex flex-col gap-2">
+
+          <li class="flex items-center gap-2"
+              [ngClass]="formControls['password'].value?.length >= 8 && formControls['password'].value?.length <= 64 ? 'text-semantic-success' : 'text-slate-medium'">
+            @if (formControls['password'].value?.length >= 8 && formControls['password'].value?.length <= 64) {
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            } @else {
+              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+            }
+            At least 8 characters
+          </li>
+
+          <li class="flex items-center gap-2"
+              [ngClass]="!formControls['password'].errors?.['missingUpperLowerDigit'] && formControls['password'].value ? 'text-semantic-success' : 'text-slate-medium'">
+            @if (!formControls['password'].errors?.['missingUpperLowerDigit'] && formControls['password'].value) {
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            } @else {
+              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+            }
+            One uppercase, lowercase, and digit
+          </li>
+
+          <li class="flex items-center gap-2"
+              [ngClass]="!formControls['password'].errors?.['missingSpecial'] && formControls['password'].value ? 'text-semantic-success' : 'text-slate-medium'">
+            @if (!formControls['password'].errors?.['missingSpecial'] && formControls['password'].value) {
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            } @else {
+              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+            }
+            One special character
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- Submit Button -->
+      <app-button
+        type="submit"
+        text="Create Account"
+      >
+      </app-button>
+
+      <!-- Footer -->
+      <p class="text-body-md text-center text-slate-medium mt-2">
+        Already have an account? <a routerLink="/login" class="text-primary font-bold hover:underline">Log in</a>
+      </p>
+
+    </form>
+  </div>
+</div>

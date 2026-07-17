@@ -55,10 +55,24 @@ body {
 
 /* Material Symbols alignment fix */
 .material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
+  font-variation-settings: 'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
   vertical-align: middle;
+}
+
+/* Removes the native reveal eye icon in Microsoft Edge */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
+/* Removes native clear/reveal mechanisms in WebKit-based browsers (Safari/Chrome variants if active) */
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
 }

@@ -1,1 +1,38 @@
-<p>input works!</p>
+<div class="flex flex-col gap-2">
+  <label [for]="inputId"
+         class="text-label-sm uppercase transition-colors"
+         [class.text-semantic-error]="control.invalid && control.touched"
+         [class.text-slate-medium]="!(control.invalid && control.touched)">
+    {{ label }}
+  </label>
+  <div class="relative">
+
+    <input [id]="inputId"
+           [type]="computedType"
+           [formControl]="control"
+           [placeholder]="placeholder"
+           class="rounded-md p-3 text-body-md focus:outline-none focus:ring-1 w-full placeholder:text-slate-light transition-colors"
+           [class.bg-[#FFDAD6]]="control.invalid && control.touched"
+           [class.text-semantic-error]="control.invalid && control.touched"
+           [class.focus:ring-semantic-error]="control.invalid && control.touched"
+           [class.bg-surface-highest]="!(control.invalid && control.touched)"
+           [class.text-slate-dark]="!(control.invalid && control.touched)"
+           [class.focus:ring-primary]="!(control.invalid && control.touched)">
+
+    <!-- Showing the eye icon button only if this input is originally a password field -->
+    @if (type === 'password') {
+      <button type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-medium hover:text-slate-dark transition-colors"
+              (click)="togglePasswordVisibility()">
+
+        <!-- Toggle the Material Symbol text based on the boolean state -->
+        <span class="material-symbols-outlined text-[20px] cursor-pointer">
+        {{ isPasswordVisible ? 'visibility_off' : 'visibility' }}
+      </span>
+
+      </button>
+    }
+  </div>
+
+  <ng-content></ng-content>
+</div>
