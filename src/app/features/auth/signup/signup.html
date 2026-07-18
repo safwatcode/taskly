@@ -1,18 +1,18 @@
-<div class="min-h-screen bg-background relative flex flex-col items-center justify-center p-6 md:p-4 pt-10 md:pt-4">
+<div class="min-h-screen  bg-background relative flex flex-col items-center justify-center p-6 md:p-4 pt-10 md:pt-4">
 
   <!-- Taskly Logo -->
-  <div class="w-full max-w-xl flex justify-start mb-8 md:absolute md:top-8 md:left-8 md:mb-0">
+  <div class="w-full flex justify-start mb-8">
     <div class="flex items-center gap-2 md:pl-4 md:pt-4">
       <img src="/assets/logos/taskly-logo.svg" alt="Taskly Logo" class="w-7 h-7">
       <span class="text-title-md text-slate-dark font-bold tracking-widest uppercase">Taskly</span>
     </div>
   </div>
 
-  <!-- Form Container (Transparent on mobile, White Card on desktop) -->
+  <!-- Form Container -->
   <div
     class="w-full max-w-xl bg-transparent md:bg-white md:rounded-xl md:shadow-sm p-0 md:p-10 flex flex-col gap-8">
 
-    <!-- Header (Left aligned on mobile, Centered on desktop) -->
+    <!-- Form Header -->
     <div class="flex flex-col items-start md:items-center gap-2 text-left md:text-center">
       <h1 class="text-headline-lg text-slate-dark">Create your workspace</h1>
       <p class="text-body-md text-slate-medium">Join the curated environment for institutional trust and task
@@ -69,7 +69,6 @@
         [control]="$any(formControls['jobTitle'])"
       ></app-input>
 
-      <!-- Password Grid (Stacks on mobile, side-by-side on desktop) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <!-- Password Field -->
@@ -102,7 +101,7 @@
         <span class="text-xs text-semantic-error -mt-3">Password cannot contain spaces.</span>
       }
 
-      <!-- Password Validation Checklist Box -->
+      <!-- Password Validation Checklist -->
       <div class="bg-surface-highest rounded-md p-4 mt-1">
         <ul class="text-[12px] font-medium flex flex-col gap-2">
 

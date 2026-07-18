@@ -39,7 +39,7 @@ export class Signup {
             // Validates letters and spaces only
             // \p{L} supports all language letters (including Arabic).
             // (?: [\p{L}]+)* ensures single spaces between words, no consecutive spaces.
-            Validators.pattern(/^[\p{L}]+(?: [\p{L}]+)*$/u),
+            Validators.pattern(/^\p{L}+(?: \p{L}+)*$/u),
           ],
         ],
         email: ['', [Validators.required, Validators.email]],
