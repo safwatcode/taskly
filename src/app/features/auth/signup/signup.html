@@ -105,32 +105,29 @@
       <div class="bg-surface-highest rounded-md p-4 mt-1">
         <ul class="text-[12px] font-medium flex flex-col gap-2">
 
-          <li class="flex items-center gap-2"
-              [ngClass]="formControls['password'].value?.length >= 8 && formControls['password'].value?.length <= 64 ? 'text-semantic-success' : 'text-slate-medium'">
+          <li class="flex items-center gap-2 text-slate-medium">
             @if (formControls['password'].value?.length >= 8 && formControls['password'].value?.length <= 64) {
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
             } @else {
-              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+              <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
             At least 8 characters
           </li>
 
-          <li class="flex items-center gap-2"
-              [ngClass]="!formControls['password'].errors?.['missingUpperLowerDigit'] && formControls['password'].value ? 'text-semantic-success' : 'text-slate-medium'">
+          <li class="flex items-center gap-2 text-slate-medium">
             @if (!formControls['password'].errors?.['missingUpperLowerDigit'] && formControls['password'].value) {
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
             } @else {
-              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+              <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
             One uppercase, lowercase, and digit
           </li>
 
-          <li class="flex items-center gap-2"
-              [ngClass]="!formControls['password'].errors?.['missingSpecial'] && formControls['password'].value ? 'text-semantic-success' : 'text-slate-medium'">
+          <li class="flex items-center gap-2 text-slate-medium">
             @if (!formControls['password'].errors?.['missingSpecial'] && formControls['password'].value) {
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
             } @else {
-              <span class="material-symbols-outlined text-[18px]">radio_button_unchecked</span>
+              <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
             One special character
           </li>

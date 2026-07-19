@@ -5,6 +5,7 @@
          [class.text-slate-medium]="!(control.invalid && control.touched)">
     {{ label }}
   </label>
+
   <div class="relative">
 
     <input [id]="inputId"
@@ -17,10 +18,11 @@
            [class.focus:ring-semantic-error]="control.invalid && control.touched"
            [class.bg-surface-highest]="!(control.invalid && control.touched)"
            [class.text-slate-dark]="!(control.invalid && control.touched)"
-           [class.focus:ring-primary]="!(control.invalid && control.touched)">
+           [class.focus:ring-primary]="!(control.invalid && control.touched)"
+    >
 
     <!-- Showing the eye icon button only if this input is originally a password field -->
-    @if (type === 'password') {
+    @if (type === 'password' && inputId !== 'confirmPassword') {
       <button type="button"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-medium hover:text-slate-dark transition-colors"
               (click)="togglePasswordVisibility()">
