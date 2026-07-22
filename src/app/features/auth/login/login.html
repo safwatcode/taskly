@@ -1,0 +1,88 @@
+<div class="min-h-screen  bg-background relative flex flex-col items-center justify-start p-6 md:p-4 pt-10 md:pt-4">
+
+  <!-- Taskly Logo -->
+  <div class="w-full flex justify-start mb-8 md:mb-2">
+    <div class="flex items-center gap-2 md:pl-4 md:pt-4">
+      <img src="/assets/logos/taskly-logo.svg" alt="Taskly Logo" class="w-7 h-7">
+      <span class="text-title-md text-slate-dark font-bold tracking-widest uppercase">Taskly</span>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <div
+    class="w-full max-w-xl bg-transparent md:bg-white md:rounded-xl md:shadow-sm p-0 md:p-10 flex flex-col gap-8">
+
+    <!-- Form Header -->
+    <div class="flex flex-col items-start md:items-center gap-2 text-left md:text-center">
+      <h1 class="text-headline-lg text-slate-dark">Welcome Back</h1>
+      <p class="text-body-md text-slate-medium">Please enter your details to access your workspace</p>
+    </div>
+
+    <!-- API Error Alert -->
+    @if (errorMessage) {
+      <div
+        class="bg-[#FCE8E8] border border-semantic-error text-semantic-error rounded-md p-4 text-body-md font-medium text-center">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <!-- Reactive Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+
+      <!-- Email Field -->
+      <app-input
+        label="Email"
+        inputId="email"
+        type="email"
+        placeholder="yourname@company.com"
+        [control]="$any(loginFormControls['email'])">
+
+        @if (loginFormControls['email'].invalid && loginFormControls['email'].touched) {
+          <span class="text-xs text-semantic-error">Please enter a valid email address.</span>
+        }
+      </app-input>
+
+      <app-input
+        label="Password"
+        inputId="password"
+        type="password"
+        placeholder="Enter your password"
+        [control]="$any(loginFormControls['password'])">
+
+        @if (loginFormControls['password'].errors?.['required'] && loginFormControls['password'].touched) {
+          <span class="text-xs text-semantic-error">Password cannot be empty.</span>
+        }
+      </app-input>
+
+      <!-- Remember Me & Forgot Password Row -->
+      <div class="flex items-center justify-between mt-1">
+
+        <!-- Remember Me Checkbox -->
+        <label class="flex items-center gap-2 text-label-sm text-slate-dark cursor-pointer font-medium">
+          <input type="checkbox" formControlName="rememberMe"
+                 class="w-4 h-4 rounded border border-slate-light text-primary focus:ring-1 focus:ring-primary accent-primary cursor-pointer">
+          Remember Me
+        </label>
+
+        <!-- Forgot Password Link -->
+        <a routerLink="/forgot-password" class="text-label-sm text-primary font-bold hover:underline">
+          Forgot Password?
+        </a>
+      </div>
+
+      <!-- Submit Button -->
+      <app-button
+        type="submit"
+        [text]="isLoading ? 'Verifying...' : 'Log in'"
+        [disabled]="isLoading"
+      >
+      </app-button>
+
+      <!-- Footer -->
+      <p class="text-body-md text-center text-slate-medium mt-2">
+        Don't have an account? <a routerLink="/sign-up" class="text-primary font-bold hover:underline">Sign Up</a>
+      </p>
+
+    </form>
+  </div>
+</div>

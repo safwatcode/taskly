@@ -76,3 +76,7 @@ input::-webkit-credentials-auto-fill-button {
   position: absolute !important;
   right: 0 !important;
 }
+
+a {
+  text-decoration: none;
+}

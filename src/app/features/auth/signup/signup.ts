@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { InputField } from '../../../shared/components/input/input';
 import { Button } from '../../../shared/components/button/button';
+import { Auth } from '../../../core/auth/services/auth';
 
 @Component({
   selector: 'app-signup',
@@ -20,12 +21,11 @@ import { Button } from '../../../shared/components/button/button';
 })
 export class Signup {
   signupForm: FormGroup;
-  // [Testing] Loading timing to mocking signup process
   isLoading = false;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  // private authService: AuthService
+  private authService = inject(Auth);
 
   constructor() {
     this.signupForm = this.fb.group(
@@ -37,8 +37,6 @@ export class Signup {
             Validators.minLength(3),
             Validators.maxLength(50),
             // Validates letters and spaces only
-            // \p{L} supports all language letters (including Arabic).
-            // (?: [\p{L}]+)* ensures single spaces between words, no consecutive spaces.
             Validators.pattern(/^\p{L}+(?: \p{L}+)*$/u),
           ],
         ],
@@ -81,42 +79,55 @@ export class Signup {
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
     const confirmPassword = control.get('confirmPassword')?.value;
+    const confirmCtrl = control.get('confirmPassword');
 
     if (password && confirmPassword && password !== confirmPassword) {
-      control.get('confirmPassword')?.setErrors({ mismatch: true });
+      confirmCtrl?.setErrors({ mismatch: true });
       return { mismatch: true };
+    } else {
+      if (confirmCtrl?.hasError('mismatch')) {
+        delete confirmCtrl.errors?.['mismatch'];
+        if (!Object.keys(confirmCtrl.errors || {}).length) {
+          confirmCtrl.setErrors(null);
+        }
+      }
+      return null;
     }
-    return null;
+  }
+
+  // Helper method to access signup form controls easily in the signup template
+  get formControls() {
+    return this.signupForm.controls;
   }
 
   onSubmit() {
-    if (this.signupForm.valid) {
-      console.log('Form Submitted Successfully:', this.signupForm.value);
-    } else {
+    if (this.signupForm.invalid) {
       this.signupForm.markAllAsTouched();
+      return;
     }
+
     this.isLoading = true;
-    // const formValues = this.signupForm.value;
+    const formValues = this.signupForm.value;
 
-    // const payload = {
-    //   email: formValues.email,
-    //   password: formValues.password,
-    //   date: {
-    //     name: formValues.name,
-    //     job_title: formValues.jobTitle || undefined,
-    //   },
-    // };
-    //
-    // console.log('Sending payload to /auth/v1/signup:', payload);
-    // setTimeout(() => {
-    //   this.isLoading = false;
-    //   this.router.navigate(['/project']);
-    // }, 1000);
-  }
+    const payload = {
+      email: formValues.email,
+      password: formValues.password,
+      data: {
+        name: formValues.name,
+        job_title: formValues.jobTitle || undefined,
+      },
+    };
+    console.log('Sending payload to /auth/v1/sign-up:', payload);
 
-  // Optional for me
-  // Helper method to access signup form controls easily in the template
-  get formControls() {
-    return this.signupForm.controls;
+    this.authService.signup(payload).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.router.navigate(['/project']);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Signup failed', err);
+      },
+    });
   }
 }

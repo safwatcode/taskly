@@ -1,4 +1,4 @@
-<button [type]="type"
-        class="bg-primary text-white text-title-md font-medium py-3 rounded-md mt-4 hover:bg-primary-container cursor-pointer transition-colors w-full">
+<button [type]="type" [disabled]="disabled"
+        class="bg-primary text-white text-title-md font-medium py-3 rounded-md mt-4 hover:bg-primary-container cursor-pointer transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none ">
   {{ text }}
 </button>

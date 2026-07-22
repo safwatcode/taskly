@@ -21,13 +21,11 @@
            [class.focus:ring-primary]="!(control.invalid && control.touched)"
     >
 
-    <!-- Showing the eye icon button only if this input is originally a password field -->
     @if (type === 'password' && inputId !== 'confirmPassword') {
       <button type="button"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-medium hover:text-slate-dark transition-colors"
               (click)="togglePasswordVisibility()">
 
-        <!-- Toggle eye icon based on the boolean state -->
         <span class="material-symbols-outlined text-[20px] cursor-pointer">
         {{ isPasswordVisible ? 'visibility_off' : 'visibility' }}
       </span>
