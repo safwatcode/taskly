@@ -1,5 +1,6 @@
 import { Component, EventEmitter, inject, OnInit, Output, signal } from '@angular/core';
 import { Auth } from '../../../../core/auth/services/auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
@@ -11,10 +12,16 @@ export class Navbar implements OnInit {
   @Output() toggleMobileMenu = new EventEmitter<void>();
 
   private authService = inject(Auth);
+  private router = inject(Router);
 
+  // Get user data
   userName = signal<string>('Loading...');
   jobTitle = signal<string>('');
   avatarText = signal<string>('--');
+
+  // Logout Handling
+  isDropDownOpen = signal<boolean>(false);
+  logoutError = signal<string | null>(null);
 
   ngOnInit() {
     this.authService.getUserProfile().subscribe({
@@ -46,5 +53,24 @@ export class Navbar implements OnInit {
     }
 
     return words[0].slice(0, 2).toUpperCase();
+  }
+
+  toggleDropdown() {
+    this.isDropDownOpen.update((val) => !val);
+  }
+
+  onLogout() {
+    this.logoutError.set(null);
+
+    this.authService.logout().subscribe({
+      next: () => {
+        this.authService.clearSession();
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Logout failed', err);
+        this.logoutError.set('Logout failed, please try again.');
+      },
+    });
   }
 }

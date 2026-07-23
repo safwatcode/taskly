@@ -17,8 +17,36 @@
     </div>
 
     <!-- Generated Avatar -->
-    <div class="w-10 h-10 rounded-md bg-primary text-white flex items-center justify-center font-bold text-sm">
-      {{ avatarText() }}
+    <div class="relative">
+      <!-- Clickable Avatar -->
+      <div
+        (click)="toggleDropdown()"
+        class="w-10 h-10 rounded-md bg-primary text-white flex items-center justify-center font-bold text-sm cursor-pointer hover:opacity-90 transition-opacity">
+        {{ avatarText() }}
+      </div>
+
+      <!-- Logout Dropdown -->
+      @if (isDropDownOpen()) {
+        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-md py-1 border border-slate-200 z-50">
+          <button
+            (click)="onLogout()"
+            class="flex items-center gap-3 p-3 rounded-lg text-semantic-error hover:bg-red-50 transition-colors w-full cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="font-medium truncate">Logout</span>
+          </button>
+        </div>
+      }
     </div>
+
+    <!-- Logout Error Message -->
+    @if (logoutError()) {
+      <div
+        class="absolute top-16 right-4 bg-semantic-error text-white px-4 py-2 rounded-md shadow-sm text-sm z-50 animate-fade-in">
+        {{ logoutError() }}
+      </div>
+    }
   </div>
 </header>

@@ -18,7 +18,7 @@
 
   <!-- Sidebar Navigation Links -->
   <nav class="flex-1 py-4 flex flex-col gap-2 px-3">
-    <a routerLink="/projects" routerLinkActive="bg-white text-primary shadow-sm"
+    <a routerLink="/project" routerLinkActive="bg-white text-primary shadow-sm"
        class="flex items-center gap-3 p-3 rounded-lg text-slate-medium hover:bg-slate-100 transition-colors cursor-pointer"
        [class.justify-center]="isCollapsed()">
       <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,6 +84,7 @@
 
   <!-- Bottom Controls -->
   <div class="p-4 flex flex-col gap-2 border-t border-slate-200">
+
     <!-- Collapse/Expand Arrow Toggle -->
     <button (click)="toggleCollapse()"
             class="flex items-center gap-3 p-3 rounded-lg text-slate-dark hover:bg-slate-100 transition-colors w-full cursor-pointer"
@@ -97,8 +98,9 @@
       }
     </button>
 
-    <!-- Logout -->
+    <!-- Logout Button -->
     <button
+      (click)="onLogout()"
       class="flex items-center gap-3 p-3 rounded-lg text-semantic-error hover:bg-red-50 transition-colors w-full cursor-pointer"
       [class.justify-center]="isCollapsed()">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

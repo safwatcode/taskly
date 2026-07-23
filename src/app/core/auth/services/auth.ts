@@ -30,6 +30,15 @@ export class Auth {
     return this.http.post(this.loginURL, payload, { headers: this.getSupabaseHeaders() });
   }
 
+  logout(): Observable<any> {
+    const logoutURL = `${this.baseURL}/auth/v1/logout`;
+    const token = this.getToken();
+
+    const headers = this.getSupabaseHeaders().set('Authorization', `Bearer ${token}`);
+
+    return this.http.post(logoutURL, {}, { headers });
+  }
+
   isAuthenticated(): boolean {
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     return !!token;
