@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Auth } from '../../../core/auth/services/auth';
 import { Router, RouterLink } from '@angular/router';
@@ -19,6 +19,7 @@ export class Login {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -55,12 +56,16 @@ export class Login {
         const token = response.access_token || 'test_token';
         this.authService.saveSession(token, formValues.rememberMe);
 
+        this.cdr.detectChanges();
+
         this.router.navigate(['/project']);
       },
       error: (err) => {
         this.isLoading = false;
-
         this.errorMessage = 'Invalid email or password';
+
+        this.cdr.detectChanges();
+
         console.error('Login failed', err);
       },
     });

@@ -72,6 +72,14 @@ export class Auth {
     return this.http.get(userURL, { headers });
   }
 
+  recoverPassword(email: string): Observable<any> {
+    const recoverURL = `${this.baseURL}/auth/v1/recover`;
+
+    const headers = this.getSupabaseHeaders();
+
+    return this.http.post(recoverURL, { email }, { headers });
+  }
+
   saveSession(token: string, rememberMe: boolean) {
     if (rememberMe) {
       const oneMonthFromNow = new Date();

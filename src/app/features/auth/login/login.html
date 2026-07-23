@@ -26,7 +26,7 @@
       </div>
     }
 
-    <!-- Reactive Form -->
+    <!-- Login Form -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
 
       <!-- Email Field -->
@@ -55,17 +55,17 @@
       </app-input>
 
       <!-- Remember Me & Forgot Password Row -->
-      <div class="flex items-center justify-between mt-1">
+      <div class="flex items-center justify-between mt-1 text-[14px]">
 
         <!-- Remember Me Checkbox -->
-        <label class="flex items-center gap-2 text-label-sm text-slate-dark cursor-pointer font-medium">
+        <label class="flex items-center gap-2 text-slate-dark cursor-pointer font-medium">
           <input type="checkbox" formControlName="rememberMe"
                  class="w-4 h-4 rounded border border-slate-light text-primary focus:ring-1 focus:ring-primary accent-primary cursor-pointer">
           Remember Me
         </label>
 
         <!-- Forgot Password Link -->
-        <a routerLink="/forgot-password" class="text-label-sm text-primary font-bold hover:underline">
+        <a routerLink="/forgot-password" class="text-primary font-bold hover:underline">
           Forgot Password?
         </a>
       </div>
