@@ -30,6 +30,39 @@ export class Auth {
     return this.http.post(this.loginURL, payload, { headers: this.getSupabaseHeaders() });
   }
 
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    return !!token;
+  }
+
+  private getToken(): string | null {
+    const sessionToken = sessionStorage.getItem('access_token');
+    if (sessionToken) {
+      return sessionToken;
+    }
+
+    const localTokenData = localStorage.getItem('access_token');
+    if (localTokenData) {
+      try {
+        const parsedData = JSON.parse(localTokenData);
+        return parsedData.token;
+      } catch (e) {
+        console.error('Error parsing local token data:', e);
+        return localTokenData;
+      }
+    }
+
+    return null;
+  }
+
+  getUserProfile(): Observable<any> {
+    const userURL = `${this.baseURL}/auth/v1/user`;
+    const token = this.getToken();
+
+    const headers = this.getSupabaseHeaders().set('Authorization', `Bearer ${token}`);
+    return this.http.get(userURL, { headers });
+  }
+
   saveSession(token: string, rememberMe: boolean) {
     if (rememberMe) {
       const oneMonthFromNow = new Date();
@@ -40,16 +73,14 @@ export class Auth {
         expires: oneMonthFromNow.getTime(),
       };
 
-      localStorage.setItem('Taskly_Session', JSON.stringify(sessionData));
+      localStorage.setItem('access_token', JSON.stringify(sessionData));
     } else {
-      sessionStorage.setItem('Taskly_Session', token);
+      sessionStorage.setItem('access_token', token);
     }
   }
 
   clearSession(): void {
-    // User Logout
-    localStorage.removeItem('Taskly_Session');
-    // User Logout User Close the tab/browser
-    sessionStorage.removeItem('Taskly_Session');
+    localStorage.removeItem('access_token');
+    sessionStorage.removeItem('access_token');
   }
 }

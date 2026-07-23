@@ -95,7 +95,6 @@ export class Signup {
     }
   }
 
-  // Helper method to access signup form controls easily in the signup template
   get formControls() {
     return this.signupForm.controls;
   }
@@ -117,12 +116,20 @@ export class Signup {
         job_title: formValues.jobTitle || undefined,
       },
     };
-    console.log('Sending payload to /auth/v1/sign-up:', payload);
-
     this.authService.signup(payload).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.router.navigate(['/project']);
+
+        if (response.access_token) {
+          this.authService.saveSession(response.access_token, false);
+          this.router.navigate(['/project']);
+        } else {
+          // In case of email verification process
+          console.warn(
+            'Signup successful, but no token returned. Email verification may be required.',
+          );
+          this.router.navigate(['/login']);
+        }
       },
       error: (err) => {
         this.isLoading = false;
