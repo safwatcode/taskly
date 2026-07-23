@@ -80,6 +80,16 @@ export class Auth {
     return this.http.post(recoverURL, { email }, { headers });
   }
 
+  updateUserPassword(password: string, token: string) {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      apikey: this.supabaseAnonKey,
+      'Content-Type': 'application/json',
+    });
+
+    return this.http.put(`${this.baseURL}/auth/v1/user`, { password }, { headers });
+  }
+
   saveSession(token: string, rememberMe: boolean) {
     if (rememberMe) {
       const oneMonthFromNow = new Date();

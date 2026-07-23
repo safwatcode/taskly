@@ -5,6 +5,7 @@ import { Project } from './features/project/project';
 import { MainLayout } from './shared/components/layout/main-layout/main-layout';
 import { authGuard } from './core/auth/guards/auth-guard';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
+import { ResetPassword } from './features/auth/reset-password/reset-password';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -19,5 +20,6 @@ export const routes: Routes = [
     ],
   },
   { path: 'forgot-password', component: ForgotPassword },
+  { path: 'reset-password', component: ResetPassword },
   { path: '**', redirectTo: 'login' },
 ];

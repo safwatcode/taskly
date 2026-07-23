@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +8,14 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly title = signal('taskly');
+  private router = inject(Router);
+
+  constructor() {
+    // Resetting Password
+    const hash = window.location.hash;
+
+    if (hash && hash.includes('type=recovery')) {
+      this.router.navigateByUrl(`/reset-password${hash}`);
+    }
+  }
 }
