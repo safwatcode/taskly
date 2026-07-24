@@ -6,8 +6,6 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class Auth {
-  private supabaseAnonKey = 'sb_publishable_Av9xf7E668gex_Re48dC4g_na-qlGFU';
-
   private baseURL = 'https://jmltwxyausnmtasziccs.supabase.co';
 
   private signupURL = `${this.baseURL}/auth/v1/signup`;
@@ -15,28 +13,17 @@ export class Auth {
 
   private http = inject(HttpClient);
 
-  private getSupabaseHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      apikey: this.supabaseAnonKey,
-      'Content-Type': 'application/json',
-    });
-  }
-
   signup(payload: any): Observable<any> {
-    return this.http.post(this.signupURL, payload, { headers: this.getSupabaseHeaders() });
+    return this.http.post(this.signupURL, payload);
   }
 
   login(payload: any): Observable<any> {
-    return this.http.post(this.loginURL, payload, { headers: this.getSupabaseHeaders() });
+    return this.http.post(this.loginURL, payload);
   }
 
   logout(): Observable<any> {
     const logoutURL = `${this.baseURL}/auth/v1/logout`;
-    const token = this.getToken();
-
-    const headers = this.getSupabaseHeaders().set('Authorization', `Bearer ${token}`);
-
-    return this.http.post(logoutURL, {}, { headers });
+    return this.http.post(logoutURL, {});
   }
 
   isAuthenticated(): boolean {
@@ -44,7 +31,7 @@ export class Auth {
     return !!token;
   }
 
-  private getToken(): string | null {
+  public getToken(): string | null {
     const sessionToken = sessionStorage.getItem('access_token');
     if (sessionToken) {
       return sessionToken;
@@ -66,25 +53,17 @@ export class Auth {
 
   getUserProfile(): Observable<any> {
     const userURL = `${this.baseURL}/auth/v1/user`;
-    const token = this.getToken();
-
-    const headers = this.getSupabaseHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get(userURL, { headers });
+    return this.http.get(userURL);
   }
 
   recoverPassword(email: string): Observable<any> {
     const recoverURL = `${this.baseURL}/auth/v1/recover`;
-
-    const headers = this.getSupabaseHeaders();
-
-    return this.http.post(recoverURL, { email }, { headers });
+    return this.http.post(recoverURL, { email });
   }
 
   updateUserPassword(password: string, token: string) {
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
-      apikey: this.supabaseAnonKey,
-      'Content-Type': 'application/json',
     });
 
     return this.http.put(`${this.baseURL}/auth/v1/user`, { password }, { headers });
