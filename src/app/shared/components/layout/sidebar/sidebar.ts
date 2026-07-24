@@ -1,6 +1,7 @@
 import { Component, EventEmitter, inject, Input, Output, signal, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/auth';
+import { ProjectContextService } from '../../../../core/project/services/project-context.service'; // Adjust path
 
 @Component({
   selector: 'app-sidebar',
@@ -14,6 +15,9 @@ export class Sidebar implements OnInit {
 
   private authService = inject(Auth);
   private router = inject(Router);
+  private projectContext = inject(ProjectContextService);
+
+  projectId = this.projectContext.activeProjectId;
 
   isCollapsed = signal<boolean>(
     typeof localStorage !== 'undefined'
