@@ -1,115 +1,280 @@
-<div class="h-full flex items-center justify-center p-6">
-  @if (projects.length === 0) {
-    <div class="max-w-md w-full flex flex-col items-center text-center">
-      <!-- Empty State -->
-      <div class="bg-[#F4F6FB] rounded-xl w-64 h-64 flex items-center justify-center relative mb-8">
-        <svg width="288" height="288" viewBox="0 0 288 288" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g clip-path="url(#clip0_15_619)">
-            <rect width="288" height="288" rx="8" fill="#F1F3FF"/>
-            <g opacity="0.1">
-              <rect width="288" height="288" fill="url(#paint0_linear_15_619)"/>
-              <rect width="288" height="288" fill="url(#paint1_linear_15_619)"/>
-            </g>
-            <g filter="url(#filter0_d_15_619)">
-              <rect x="197.62" y="42.64" width="48" height="48" rx="4" transform="rotate(-5.99997 197.62 42.64)"
-                    fill="white" shape-rendering="crispEdges"/>
+<div class="h-full flex flex-col p-4 md:p-8 bg-slate-50 min-h-screen">
+
+  <!-- Header Section -->
+  <div class="flex justify-between items-start md:items-center mb-8">
+    <div>
+      <h1 class="text-[28px] font-bold text-[#041B3C]">Projects</h1>
+      <p class="text-slate-500 text-sm mt-1">Manage and curate your projects</p>
+    </div>
+
+    <!-- Add New Project Button -->
+    <button routerLink="/project/add"
+            class="hidden md:flex bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-2.5 px-5 rounded-lg items-center gap-2 transition-colors shadow-sm cursor-pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Create New Project
+    </button>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="grow">
+
+    <!-- LOADING STATE -->
+    @if (isLoading) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="bg-white rounded-xl p-6 border border-slate-100 shadow-sm min-h-50 flex flex-col animate-pulse">
+            <div class="h-6 bg-slate-100 rounded w-3/4 mb-4"></div>
+            <div class="space-y-2 mb-6 grow">
+              <div class="h-4 bg-slate-50 rounded w-full"></div>
+              <div class="h-4 bg-slate-50 rounded w-5/6"></div>
+            </div>
+            <div class="pt-4 border-t border-slate-50 flex justify-between">
+              <div class="h-3 bg-slate-100 rounded w-16"></div>
+              <div class="h-3 bg-slate-100 rounded w-24"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (hasError) {
+      <!-- ERROR STATE -->
+      <div class="flex flex-col items-center justify-start text-center">
+        <div class="bg-red-50 p-4 rounded-2xl mb-6 text-red-500">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+            <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+            <line x1="2" y1="2" x2="22" y2="22"></line>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-[#041B3C] mb-2">Something went wrong</h2>
+        <p class="text-slate-500 mb-8 max-w-sm leading-relaxed">
+          We're having trouble retrieving your projects right now. Please try again in a moment.
+        </p>
+        <button (click)="retryConnection()"
+                class="bg-[#003D9B] hover:bg-blue-800bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-2.5 px-6 rounded-lg transition-colors shadow-sm cursor-pointer">
+          Retry Connection
+        </button>
+      </div>
+    } @else if (projects.length === 0) {
+      <!-- EMPTY STATE -->
+      <div class="h-full flex items-center justify-center p-6 mt-10">
+        <div class="max-w-md w-full flex flex-col items-center text-center">
+          <div class="bg-[#F4F6FB] rounded-xl w-64 h-64 flex items-center justify-center relative mb-8">
+            <svg width="288" height="288" viewBox="0 0 288 288" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_15_619)">
+                <rect width="288" height="288" rx="8" fill="#F1F3FF"/>
+                <g opacity="0.1">
+                  <rect width="288" height="288" fill="url(#paint0_linear_15_619)"/>
+                  <rect width="288" height="288" fill="url(#paint1_linear_15_619)"/>
+                </g>
+                <g filter="url(#filter0_d_15_619)">
+                  <rect x="197.62" y="42.64" width="48" height="48" rx="4" transform="rotate(-5.99997 197.62 42.64)"
+                        fill="white" shape-rendering="crispEdges"/>
+                  <path
+                    d="M224.993 73.4727L215.31 67.4518L216.821 66.0361L224.726 70.9366L231.44 64.4996L233.212 65.5703L224.993 73.4727ZM224.465 68.4503L214.782 62.4294L223.001 54.527L232.684 60.5479L224.465 68.4503ZM224.198 65.9143L229.452 60.8876L223.268 57.0631L218.015 62.0897L224.198 65.9143Z"
+                    fill="#0052CC"/>
+                </g>
+                <g filter="url(#filter1_d_15_619)">
+                  <rect x="44.6001" y="196.27" width="40" height="40" rx="4" transform="rotate(12 44.6001 196.27)"
+                        fill="white" shape-rendering="crispEdges"/>
+                  <path
+                    d="M52.065 227.002C51.4618 226.874 50.9965 226.558 50.6692 226.054C50.3418 225.55 50.2422 224.996 50.3704 224.393L53.2188 210.992C53.3193 210.52 53.6096 210.236 54.0896 210.142C54.5696 210.048 54.938 210.199 55.1947 210.595L56.9278 213.263L55.3266 214.303L55.8658 215.133L57.4669 214.093L59.4696 217.177L57.8684 218.217L58.4075 219.047L60.0087 218.007L62.0113 221.091L60.4101 222.131L60.9493 222.961L62.5505 221.921L64.5531 225.005L62.9519 226.045L63.4911 226.875L65.0923 225.835L66.6327 228.208C66.8895 228.603 66.8773 229.001 66.5963 229.401C66.3153 229.801 65.9384 229.951 65.4656 229.851L52.065 227.002ZM53.4712 224.234L61.5898 225.96L55.1969 216.116L53.4712 224.234Z"
+                    fill="#737685"/>
+                </g>
+                <rect x="96" y="96" width="96" height="96" rx="12" fill="#D7E2FF"/>
+                <g filter="url(#filter2_dd_15_619)">
+                  <rect x="96" y="96" width="96" height="96" rx="12" fill="white" fill-opacity="0.01"
+                        shape-rendering="crispEdges"/>
+                </g>
+                <path
+                  d="M131.837 165.154L131.5 162.538L137.952 144.74C138.288 145.035 138.637 145.268 138.998 145.44C139.358 145.611 139.731 145.753 140.115 145.865L133.817 163.298L131.837 165.154ZM156.163 165.154L154.183 163.298L147.885 145.865C148.269 145.753 148.642 145.611 149.002 145.44C149.363 145.268 149.712 145.035 150.048 144.74L156.5 162.538L156.163 165.154ZM144 141.596C142.269 141.596 140.795 140.987 139.577 139.769C138.359 138.551 137.75 137.077 137.75 135.346C137.75 133.721 138.259 132.361 139.276 131.267C140.294 130.172 141.452 129.519 142.75 129.308V122.846H145.25V129.308C146.548 129.519 147.706 130.172 148.724 131.267C149.741 132.361 150.25 133.721 150.25 135.346C150.25 137.077 149.641 138.551 148.423 139.769C147.205 140.987 145.731 141.596 144 141.596ZM144 139.096C145.029 139.096 145.911 138.728 146.647 137.993C147.382 137.257 147.75 136.375 147.75 135.346C147.75 134.317 147.382 133.435 146.647 132.7C145.911 131.964 145.029 131.596 144 131.596C142.971 131.596 142.089 131.964 141.353 132.7C140.618 133.435 140.25 134.317 140.25 135.346C140.25 136.375 140.618 137.257 141.353 137.993C142.089 138.728 142.971 139.096 144 139.096Z"
+                  fill="#003D9B"/>
+              </g>
+              <defs>
+                <filter id="filter0_d_15_619" x="195.62" y="36.6227" width="56.7544" height="56.7544"
+                        filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                  <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                  <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                                 result="hardAlpha"/>
+                  <feOffset dy="1"/>
+                  <feGaussianBlur stdDeviation="1"/>
+                  <feComposite in2="hardAlpha" operator="out"/>
+                  <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
+                  <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
+                  <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_15_619" result="shape"/>
+                </filter>
+                <filter id="filter1_d_15_619" x="34.2837" y="195.27" width="51.4424" height="51.4424"
+                        filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                  <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                  <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                                 result="hardAlpha"/>
+                  <feOffset dy="1"/>
+                  <feGaussianBlur stdDeviation="1"/>
+                  <feComposite in2="hardAlpha" operator="out"/>
+                  <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
+                  <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
+                  <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_15_619" result="shape"/>
+                </filter>
+                <filter id="filter2_dd_15_619" x="76" y="96" width="136" height="136" filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB">
+                  <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                  <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                                 result="hardAlpha"/>
+                  <feMorphology radius="6" operator="erode" in="SourceAlpha" result="effect1_dropShadow_15_619"/>
+                  <feOffset dy="8"/>
+                  <feGaussianBlur stdDeviation="5"/>
+                  <feComposite in2="hardAlpha" operator="out"/>
+                  <feColorMatrix type="matrix"
+                                 values="0 0 0 0 0.0156863 0 0 0 0 0.105882 0 0 0 0 0.235294 0 0 0 0.05 0"/>
+                  <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
+                  <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                                 result="hardAlpha"/>
+                  <feMorphology radius="5" operator="erode" in="SourceAlpha" result="effect2_dropShadow_15_619"/>
+                  <feOffset dy="20"/>
+                  <feGaussianBlur stdDeviation="12.5"/>
+                  <feComposite in2="hardAlpha" operator="out"/>
+                  <feColorMatrix type="matrix"
+                                 values="0 0 0 0 0.0156863 0 0 0 0 0.105882 0 0 0 0 0.235294 0 0 0 0.05 0"/>
+                  <feBlend mode="normal" in2="effect1_dropShadow_15_619" result="effect2_dropShadow_15_619"/>
+                  <feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_15_619" result="shape"/>
+                </filter>
+                <linearGradient id="paint0_linear_15_619" x1="0" y1="144" x2="288" y2="144"
+                                gradientUnits="userSpaceOnUse">
+                  <stop offset="0.0416667" stop-color="#003D9B"/>
+                  <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="paint1_linear_15_619" x1="144" y1="0" x2="144" y2="288"
+                                gradientUnits="userSpaceOnUse">
+                  <stop offset="0.0416667" stop-color="#003D9B"/>
+                  <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
+                </linearGradient>
+                <clipPath id="clip0_15_619">
+                  <rect width="288" height="288" rx="8" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <h2 class="text-3xl font-bold text-[#041B3C] mb-3">No Projects</h2>
+          <p class="text-slate-500 mb-8 leading-relaxed">
+            You don't have any projects yet. Start by defining your first architectural workspace to begin tracking
+            tasks and epics.
+          </p>
+          <button routerLink="/project/add"
+                  class="bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-md shadow-blue-900/20">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Create New Project
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- PROJECTS GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Project Cards -->
+        @for (project of projects; track project.id) {
+          <div
+            class="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col min-h-55 cursor-pointer hover:shadow-md hover:border-slate-200 transition-all">
+
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-[#041B3C] text-lg pr-4 mb-3">{{ project.name }}</h3>
+              <button class="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer">
+                <svg width="20px" height="20px" fill="currentColor" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 494.936 494.936">
+                  <g>
+                    <g>
+                      <path d="M389.844,182.85c-6.743,0-12.21,5.467-12.21,12.21v222.968c0,23.562-19.174,42.735-42.736,42.735H67.157
+			c-23.562,0-42.736-19.174-42.736-42.735V150.285c0-23.562,19.174-42.735,42.736-42.735h267.741c6.743,0,12.21-5.467,12.21-12.21
+			s-5.467-12.21-12.21-12.21H67.157C30.126,83.13,0,113.255,0,150.285v267.743c0,37.029,30.126,67.155,67.157,67.155h267.741
+			c37.03,0,67.156-30.126,67.156-67.155V195.061C402.054,188.318,396.587,182.85,389.844,182.85z"/>
+                      <path d="M483.876,20.791c-14.72-14.72-38.669-14.714-53.377,0L221.352,229.944c-0.28,0.28-3.434,3.559-4.251,5.396l-28.963,65.069
+			c-2.057,4.619-1.056,10.027,2.521,13.6c2.337,2.336,5.461,3.576,8.639,3.576c1.675,0,3.362-0.346,4.96-1.057l65.07-28.963
+			c1.83-0.815,5.114-3.97,5.396-4.25L483.876,74.169c7.131-7.131,11.06-16.61,11.06-26.692
+			C494.936,37.396,491.007,27.915,483.876,20.791z M466.61,56.897L257.457,266.05c-0.035,0.036-0.055,0.078-0.089,0.107
+			l-33.989,15.131L238.51,247.3c0.03-0.036,0.071-0.055,0.107-0.09L447.765,38.058c5.038-5.039,13.819-5.033,18.846,0.005
+			c2.518,2.51,3.905,5.855,3.905,9.414C470.516,51.036,469.127,54.38,466.61,56.897z"/>
+                    </g>
+                  </g>
+                </svg>
+
+
+              </button>
+            </div>
+
+            <p class="text-slate-500 text-sm leading-relaxed mb-6 grow line-clamp-3">
+              {{ project.description }}
+            </p>
+
+            <!-- Project Card Footer -->
+            <div class="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-medium">
+              <span class="hidden md:inline text-slate-400 uppercase tracking-wider text-[10px]">Created At</span>
+              <div class="flex items-center gap-1.5 md:hidden text-slate-400">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <span class="text-slate-700 md:text-slate-500">{{ project.created_at | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+        }
+        <!-- Add Project Card -->
+        <div routerLink="/project/add"
+             class="hidden md:flex flex-col items-center justify-center bg-transparent rounded-xl border-2 border-dashed border-slate-200 hover:border-[#0052CC] hover:bg-blue-50/30 transition-all cursor-pointer min-h-55">
+          <div class="bg-[#F4F6FB] p-3 rounded-xl mb-4 text-[#0052CC]">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
-                d="M224.993 73.4727L215.31 67.4518L216.821 66.0361L224.726 70.9366L231.44 64.4996L233.212 65.5703L224.993 73.4727ZM224.465 68.4503L214.782 62.4294L223.001 54.527L232.684 60.5479L224.465 68.4503ZM224.198 65.9143L229.452 60.8876L223.268 57.0631L218.015 62.0897L224.198 65.9143Z"
-                fill="#0052CC"/>
-            </g>
-            <g filter="url(#filter1_d_15_619)">
-              <rect x="44.6001" y="196.27" width="40" height="40" rx="4" transform="rotate(12 44.6001 196.27)"
-                    fill="white" shape-rendering="crispEdges"/>
-              <path
-                d="M52.065 227.002C51.4618 226.874 50.9965 226.558 50.6692 226.054C50.3418 225.55 50.2422 224.996 50.3704 224.393L53.2188 210.992C53.3193 210.52 53.6096 210.236 54.0896 210.142C54.5696 210.048 54.938 210.199 55.1947 210.595L56.9278 213.263L55.3266 214.303L55.8658 215.133L57.4669 214.093L59.4696 217.177L57.8684 218.217L58.4075 219.047L60.0087 218.007L62.0113 221.091L60.4101 222.131L60.9493 222.961L62.5505 221.921L64.5531 225.005L62.9519 226.045L63.4911 226.875L65.0923 225.835L66.6327 228.208C66.8895 228.603 66.8773 229.001 66.5963 229.401C66.3153 229.801 65.9384 229.951 65.4656 229.851L52.065 227.002ZM53.4712 224.234L61.5898 225.96L55.1969 216.116L53.4712 224.234Z"
-                fill="#737685"/>
-            </g>
-            <rect x="96" y="96" width="96" height="96" rx="12" fill="#D7E2FF"/>
-            <g filter="url(#filter2_dd_15_619)">
-              <rect x="96" y="96" width="96" height="96" rx="12" fill="white" fill-opacity="0.01"
-                    shape-rendering="crispEdges"/>
-            </g>
-            <path
-              d="M131.837 165.154L131.5 162.538L137.952 144.74C138.288 145.035 138.637 145.268 138.998 145.44C139.358 145.611 139.731 145.753 140.115 145.865L133.817 163.298L131.837 165.154ZM156.163 165.154L154.183 163.298L147.885 145.865C148.269 145.753 148.642 145.611 149.002 145.44C149.363 145.268 149.712 145.035 150.048 144.74L156.5 162.538L156.163 165.154ZM144 141.596C142.269 141.596 140.795 140.987 139.577 139.769C138.359 138.551 137.75 137.077 137.75 135.346C137.75 133.721 138.259 132.361 139.276 131.267C140.294 130.172 141.452 129.519 142.75 129.308V122.846H145.25V129.308C146.548 129.519 147.706 130.172 148.724 131.267C149.741 132.361 150.25 133.721 150.25 135.346C150.25 137.077 149.641 138.551 148.423 139.769C147.205 140.987 145.731 141.596 144 141.596ZM144 139.096C145.029 139.096 145.911 138.728 146.647 137.993C147.382 137.257 147.75 136.375 147.75 135.346C147.75 134.317 147.382 133.435 146.647 132.7C145.911 131.964 145.029 131.596 144 131.596C142.971 131.596 142.089 131.964 141.353 132.7C140.618 133.435 140.25 134.317 140.25 135.346C140.25 136.375 140.618 137.257 141.353 137.993C142.089 138.728 142.971 139.096 144 139.096Z"
-              fill="#003D9B"/>
-          </g>
-          <defs>
-            <filter id="filter0_d_15_619" x="195.62" y="36.6227" width="56.7544" height="56.7544"
-                    filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                             result="hardAlpha"/>
-              <feOffset dy="1"/>
-              <feGaussianBlur stdDeviation="1"/>
-              <feComposite in2="hardAlpha" operator="out"/>
-              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
-              <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_15_619" result="shape"/>
-            </filter>
-            <filter id="filter1_d_15_619" x="34.2837" y="195.27" width="51.4424" height="51.4424"
-                    filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                             result="hardAlpha"/>
-              <feOffset dy="1"/>
-              <feGaussianBlur stdDeviation="1"/>
-              <feComposite in2="hardAlpha" operator="out"/>
-              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
-              <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_15_619" result="shape"/>
-            </filter>
-            <filter id="filter2_dd_15_619" x="76" y="96" width="136" height="136" filterUnits="userSpaceOnUse"
-                    color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                             result="hardAlpha"/>
-              <feMorphology radius="6" operator="erode" in="SourceAlpha" result="effect1_dropShadow_15_619"/>
-              <feOffset dy="8"/>
-              <feGaussianBlur stdDeviation="5"/>
-              <feComposite in2="hardAlpha" operator="out"/>
-              <feColorMatrix type="matrix" values="0 0 0 0 0.0156863 0 0 0 0 0.105882 0 0 0 0 0.235294 0 0 0 0.05 0"/>
-              <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_15_619"/>
-              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                             result="hardAlpha"/>
-              <feMorphology radius="5" operator="erode" in="SourceAlpha" result="effect2_dropShadow_15_619"/>
-              <feOffset dy="20"/>
-              <feGaussianBlur stdDeviation="12.5"/>
-              <feComposite in2="hardAlpha" operator="out"/>
-              <feColorMatrix type="matrix" values="0 0 0 0 0.0156863 0 0 0 0 0.105882 0 0 0 0 0.235294 0 0 0 0.05 0"/>
-              <feBlend mode="normal" in2="effect1_dropShadow_15_619" result="effect2_dropShadow_15_619"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_15_619" result="shape"/>
-            </filter>
-            <linearGradient id="paint0_linear_15_619" x1="0" y1="144" x2="288" y2="144" gradientUnits="userSpaceOnUse">
-              <stop offset="0.0416667" stop-color="#003D9B"/>
-              <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
-            </linearGradient>
-            <linearGradient id="paint1_linear_15_619" x1="144" y1="0" x2="144" y2="288" gradientUnits="userSpaceOnUse">
-              <stop offset="0.0416667" stop-color="#003D9B"/>
-              <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
-            </linearGradient>
-            <clipPath id="clip0_15_619">
-              <rect width="288" height="288" rx="8" fill="white"/>
-            </clipPath>
-          </defs>
-        </svg>
+                d="M9 15H11V11H15V9H11V5H9V9H5V11H9V15ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20ZM10 18C12.2333 18 14.125 17.225 15.675 15.675C17.225 14.125 18 12.2333 18 10C18 7.76667 17.225 5.875 15.675 4.325C14.125 2.775 12.2333 2 10 2C7.76667 2 5.875 2.775 4.325 4.325C2.775 5.875 2 7.76667 2 10C2 12.2333 2.775 14.125 4.325 15.675C5.875 17.225 7.76667 18 10 18Z"
+                fill="#041B3C"/>
+            </svg>
+          </div>
+          <span class="font-bold text-[13px] tracking-widest text-[#041B3C] uppercase">Add Project</span>
+        </div>
       </div>
 
-      <h2 class="text-3xl font-bold text-[#041B3C] mb-3">No Projects</h2>
-      <p class="text-slate-500 mb-8 leading-relaxed">
-        You don't have any projects yet. Start by defining your first architectural workspace to begin tracking tasks
-        and epics.
-      </p>
+      <!-- UI-Only Pagination -->
+      <div class="hidden md:flex justify-between items-center text-sm text-slate-500 border-t border-slate-200 pt-6">
+        <span>Showing 5 of <span class="font-bold text-slate-700">24</span> active projects</span>
+        <div class="flex items-center gap-2">
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50">
+            &lt;
+          </button>
+          <button class="w-8 h-8 flex items-center justify-center rounded bg-[#0052CC] text-white font-medium">1
+          </button>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium">
+            2
+          </button>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium">
+            &gt;
+          </button>
+        </div>
+      </div>
+    }
+  </div>
 
-      <button routerLink="/project/add"
-              class="bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-md shadow-blue-900/20">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-        Create New Project
-      </button>
-    </div>
+  <!-- Mobile Floating Action Button  -->
+  @if (!isLoading && !hasError && projects.length > 0) {
+    <button routerLink="/project/add"
+            class="md:hidden fixed bottom-24 right-6 bg-[#003D9B] hover:bg-blue-800 text-white w-14 h-14 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/30 z-40 transition-transform active:scale-95 cursor-pointer">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
   }
 </div>

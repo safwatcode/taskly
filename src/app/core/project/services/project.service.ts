@@ -13,6 +13,14 @@ export class ProjectService {
   private baseURL = 'https://jmltwxyausnmtasziccs.supabase.co';
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
 
+  private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
+
+  getProjects(): Observable<ProjectResponse[]> {
+    return this.http
+      .get<ProjectResponse[]>(this.rpcProjectsURL)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   addProject(payload: ProjectPayload): Observable<ProjectResponse[]> {
     const headers = new HttpHeaders({
       Prefer: 'return=representation',
@@ -24,7 +32,7 @@ export class ProjectService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unexpected error occurred while creating the project.';
+    let errorMessage = 'An unexpected error occurred while processing your request.';
 
     if (error.error instanceof ErrorEvent) {
       // Client-side or network error
@@ -39,6 +47,7 @@ export class ProjectService {
     }
 
     console.error('ProjectService Error:', error);
-    return throwError(() => new Error(errorMessage));
+
+    return throwError(() => ({ message: errorMessage, status: error.status }));
   }
 }
