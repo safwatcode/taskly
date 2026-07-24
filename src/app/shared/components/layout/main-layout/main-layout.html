@@ -1,4 +1,5 @@
 <div class="flex h-screen w-full bg-background overflow-hidden">
+
   <!-- Sidebar -->
   <app-sidebar
     [isMobileOpen]="mobileMenuOpen"
@@ -10,9 +11,10 @@
     <!-- Navbar -->
     <app-navbar (toggleMobileMenu)="mobileMenuOpen = !mobileMenuOpen"></app-navbar>
 
-    <!-- Page Content -->
-    <main class="flex-1 overflow-auto p-6">
+    <!-- Main Page Content -->
+    <main class="flex-1 overflow-auto p-6 pb-24 md:pb-6">
       <router-outlet></router-outlet>
     </main>
   </div>
+
 </div>
