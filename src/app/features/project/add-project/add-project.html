@@ -1,0 +1,161 @@
+<!-- Breadcrumbs & Title -->
+<div class="mb-4 md:mb-3 hidden md:block">
+  <div class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+    <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">Projects</a>
+    <span>›</span>
+    <span class="text-[#003D9B]">Add New Project</span>
+  </div>
+  <h1 class="text-3xl font-bold text-[#041B3C]">Add New Project</h1>
+</div>
+
+<div class="max-w-4xl mx-auto md:p-2">
+
+  <!-- Add New Project -->
+  <div class="md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-100 overflow-hidden">
+
+    <!-- Card Header -->
+    <div class="p-6 md:p-8 md:border-b border-slate-100 flex items-start gap-4">
+      <div class="hidden md:flex bg-[#F0F4FF] text-[#003D9B] p-3 rounded-lg shrink-0">
+        <svg width="22" height="20" viewBox="0 0 22 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.0833 0 12.1083 0.158333 13.075 0.475C14.0417 0.791667 14.9333 1.23333 15.75 1.8L14.3 3.275C13.6667 2.875 12.9917 2.5625 12.275 2.3375C11.5583 2.1125 10.8 2 10 2C7.78333 2 5.89583 2.77917 4.3375 4.3375C2.77917 5.89583 2 7.78333 2 10C2 12.2167 2.77917 14.1042 4.3375 15.6625C5.89583 17.2208 7.78333 18 10 18C10.5333 18 11.05 17.95 11.55 17.85C12.05 17.75 12.5333 17.6083 13 17.425L14.5 18.95C13.8167 19.2833 13.1 19.5417 12.35 19.725C11.6 19.9083 10.8167 20 10 20ZM17 18V15H14V13H17V10H19V13H22V15H19V18H17ZM8.6 14.6L4.35 10.35L5.75 8.95L8.6 11.8L18.6 1.775L20 3.175L8.6 14.6Z"
+            fill="#0052CC"/>
+        </svg>
+      </div>
+      <div>
+        <!-- Mobile header -->
+        <h2 class="text-2xl md:text-xl font-bold text-[#041B3C] mb-1">Initialize New Project</h2>
+        <p class="text-slate-500 text-sm">Define the scope and foundational details of your project.</p>
+      </div>
+    </div>
+
+    <!-- Add New Project (Form) -->
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="px-6 pb-6 md:p-8">
+
+      <!-- API Success Alert -->
+      @if (successMessage) {
+        <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <h3 class="text-sm font-bold text-green-800">Success</h3>
+            <p class="text-sm text-green-700 mt-1">{{ successMessage }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- API Error Alert -->
+      @if (errorMessage) {
+        <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+          <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <h3 class="text-sm font-bold text-red-800">Submission Failed</h3>
+            <p class="text-sm text-red-700 mt-1">{{ errorMessage }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Project Title Field -->
+      <div class="mb-5">
+        <label for="name" class="block text-xs font-bold text-slate-600 tracking-wider uppercase mb-2">
+          Project Title <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          [class.border-red-500]="addNewProjectFormControls['name'].invalid && addNewProjectFormControls['name'].touched"
+          [class.text-red-500]="addNewProjectFormControls['name'].invalid && addNewProjectFormControls['name'].touched"
+          class="w-full bg-[#E6EEF9] text-[#041B3C] border-2 border-transparent focus:border-[#003D9B] focus:bg-white rounded-lg px-4 py-3 outline-none transition-all font-medium"
+          placeholder="e.g. Website Redesign">
+
+        <!-- Error Message-->
+        @if (addNewProjectFormControls['name'].invalid && addNewProjectFormControls['name'].touched) {
+          <div class="flex items-center gap-1.5 text-red-600 text-xs font-medium mt-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            @if (addNewProjectFormControls['name'].errors?.['required']) {
+              <span>Project name is required.</span>
+            } @else if (addNewProjectFormControls['name'].errors?.['minlength']) {
+              <span>Project Name must be at least 3 characters.</span>
+            } @else if (addNewProjectFormControls['name'].errors?.['maxlength']) {
+              <span>Project name cannot exceed 100 characters.</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Description Field -->
+      <div class="mb-6 md:mb-8">
+        <div class="flex justify-between items-end mb-2">
+          <label for="description" class="block text-xs font-bold text-slate-600 tracking-wider uppercase">
+            Description
+          </label>
+          <span class="text-xs text-slate-400">Optional</span>
+        </div>
+
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          [class.border-red-500]="addNewProjectFormControls['description'].invalid && addNewProjectFormControls['description'].touched"
+          class="w-full bg-[#E6EEF9] text-[#041B3C] border-2 border-transparent focus:border-[#003D9B] focus:bg-white rounded-lg px-4 py-3 outline-none transition-all resize-none font-medium"
+          placeholder="Provide a high-level overview of the project's architectural objectives and key milestones..."></textarea>
+
+        <!-- Character Count / Error -->
+        <div class="flex justify-end mt-2">
+          @if (addNewProjectFormControls['description'].invalid && addNewProjectFormControls['description'].touched) {
+            <span class="text-red-500 text-xs flex-1">Description cannot exceed 500 characters.</span>
+          }
+          <span class="text-xs font-medium" [class.text-red-500]="descriptionLength > 500"
+                [class.text-slate-500]="descriptionLength <= 500">
+            {{ descriptionLength }} / 500
+          </span>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div
+        class="flex flex-col-reverse md:flex-row items-center justify-between pt-2 md:pt-6 md:border-t border-slate-100 gap-3 md:gap-0">
+        <button type="button" routerLink="/project"
+                class="w-full md:w-auto text-[#003D9B] font-semibold hover:text-[#041B3C] px-4 py-3 md:py-2 transition-colors cursor-pointer text-center">
+          Back
+        </button>
+        <button
+          type="submit"
+          [disabled]="isLoading"
+          class="w-full md:w-auto bg-[#003D9B] hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3.5 md:py-3 px-8 rounded-lg transition-colors cursor-pointer shadow-md shadow-blue-900/20">
+          {{ isLoading ? 'Creating...' : 'Create Project' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Footer (Pro Tip) -->
+    <div
+      class="bg-[#F4F7FF] md:bg-[#F8FAFC] rounded-xl md:rounded-none md:border-t border-slate-100 p-5 mx-6 mb-6 md:m-0 md:px-8 flex items-start gap-3">
+      <svg class="hidden md:block w-5 h-5 text-slate-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6"></path>
+        <path d="M10 22h4"></path>
+        <path
+          d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+      </svg>
+      <p class="text-sm text-[#475569]">
+        <strong class="text-[#1E293B] block md:inline mb-1 md:mb-0">Pro Tip</strong>
+        You can invite project members and assign epics immediately after the initial creation process.
+      </p>
+    </div>
+
+  </div>
+</div>

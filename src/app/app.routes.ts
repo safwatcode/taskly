@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
 import { Signup } from './features/auth/signup/signup';
 import { Login } from './features/auth/login/login';
-import { Project } from './features/project/project';
 import { MainLayout } from './shared/components/layout/main-layout/main-layout';
 import { authGuard } from './core/auth/guards/auth-guard';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { Project } from './features/project/project';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -15,7 +15,20 @@ export const routes: Routes = [
     component: MainLayout,
     canActivate: [authGuard],
     children: [
-      { path: 'project', component: Project },
+      {
+        path: 'project',
+        children: [
+          {
+            path: '',
+            component: Project,
+          },
+          {
+            path: 'add',
+            loadComponent: () =>
+              import('./features/project/add-project/add-project').then((m) => m.AddProject),
+          },
+        ],
+      },
       { path: '', redirectTo: 'project', pathMatch: 'full' },
     ],
   },
