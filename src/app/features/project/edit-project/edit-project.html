@@ -52,13 +52,13 @@
             </svg>
             <div>
               <h3 class="text-sm font-bold text-green-800">Success</h3>
-              <p class="text-sm text-green-700 mt-1">Project successfully updated! Redirecting to Projects page...</p>
+              <p class="text-sm text-green-700 mt-1">{{ successMessage }}</p>
             </div>
           </div>
         }
 
         <!-- API Error Alert -->
-        @if (hasError) {
+        @if (errorMessage) {
           <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
             <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -68,7 +68,7 @@
             </svg>
             <div>
               <h3 class="text-sm font-bold text-red-800">Update Failed</h3>
-              <p class="text-sm text-red-700 mt-1">Failed to load or update project details. Please try again.</p>
+              <p class="text-sm text-red-700 mt-1">{{ errorMessage }}</p>
             </div>
           </div>
         }

@@ -24,8 +24,8 @@ export class EditProject implements OnInit {
 
   isLoading = true;
   isSaving = false;
-  successMessage = false;
-  hasError = false;
+  successMessage: string | null = null;
+  errorMessage: string | null = null;
 
   ngOnInit(): void {
     this.editForm = this.fb.group({
@@ -68,8 +68,10 @@ export class EditProject implements OnInit {
             description: project.description,
           });
         },
-        error: () => {
-          this.hasError = true;
+        error: (err) => {
+          this.errorMessage =
+            err.message || 'An unexpected error occurred while getting project data.';
+            console.error(`Failed to load project data: ${err.message || 'Unknown error'}`);
         },
       });
   }
@@ -93,19 +95,18 @@ export class EditProject implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.successMessage = true; // Show success message[cite: 3]
+          this.successMessage = 'Project successfully updated! Redirecting to Projects page...';
           setTimeout(() => {
             this.router.navigate(['/project']);
-          }, 2000); // Redirect after 2 seconds
+          }, 2000);
         },
         error: (err) => {
-          console.error('Failed to update project', err);
+          console.error('Failed to update project', err.message);
         },
       });
   }
 
   onCancel(): void {
-    // Redirect back to project listing without saving[cite: 3]
     this.router.navigate(['/project']);
   }
 }
