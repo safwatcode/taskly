@@ -27,6 +27,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/project/add-project/add-project').then((m) => m.AddProject),
           },
+          {
+            path: ':projectId/edit',
+            loadComponent: () =>
+              import('./features/project/edit-project/edit-project').then((m) => m.EditProject),
+          },
         ],
       },
       { path: '', redirectTo: 'project', pathMatch: 'full' },

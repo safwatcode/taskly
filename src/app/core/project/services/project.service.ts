@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectPayload, ProjectResponse } from '../models/project.model';
 
@@ -28,6 +28,19 @@ export class ProjectService {
 
     return this.http
       .post<ProjectResponse[]>(this.projectsURL, payload, { headers })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getProjectById(id: string): Observable<ProjectResponse> {
+    return this.http.get<ProjectResponse[]>(`${this.projectsURL}?id=eq.${id}`).pipe(
+      map((projects) => projects[0]),
+      catchError(this.handleError.bind(this)),
+    );
+  }
+
+  updateProject(id: string, payload: { name: string; description: string }): Observable<any> {
+    return this.http
+      .patch(`${this.projectsURL}?id=eq.${id}`, payload)
       .pipe(catchError(this.handleError.bind(this)));
   }
 
