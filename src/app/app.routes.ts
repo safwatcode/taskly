@@ -25,12 +25,12 @@ export const routes: Routes = [
           {
             path: 'add',
             loadComponent: () =>
-              import('./features/project/add-project/add-project').then((m) => m.AddProject),
+              import('./features/project/project-form/project-form').then((m) => m.ProjectForm),
           },
           {
             path: ':projectId/edit',
             loadComponent: () =>
-              import('./features/project/edit-project/edit-project').then((m) => m.EditProject),
+              import('./features/project/project-form/project-form').then((m) => m.ProjectForm),
           },
         ],
       },

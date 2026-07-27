@@ -1,5 +1,21 @@
-import { ChangeDetectorRef, Component, computed, inject, OnDestroy, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectorRef,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Auth } from '../../../core/auth/services/auth';
 import { Button } from '../../../shared/components/button/button';
 import { InputField } from '../../../shared/components/input/input';
@@ -11,8 +27,11 @@ import { RouterLink } from '@angular/router';
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
-export class ForgotPassword implements OnDestroy {
-  forgotPasswordForm: FormGroup;
+export class ForgotPassword implements OnInit, OnDestroy {
+  forgotPasswordForm!: FormGroup<{
+    email: FormControl<string | null>;
+  }>;
+
   isLoading = false;
   isSuccess = false;
   apiError: string | null = null;
@@ -21,13 +40,19 @@ export class ForgotPassword implements OnDestroy {
   trials = 0;
   maxTrials = 3;
 
-  private timeInterval: any = null;
+  // Using TypeScript's native ReturnType utility for intervals
+  private timeInterval: ReturnType<typeof setInterval> | null = null;
 
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef); // Injected to manage HTTP memory cleanup
 
-  constructor() {
+  ngOnInit(): void {
+    this.initForm();
+  }
+
+  private initForm(): void {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });
@@ -48,25 +73,28 @@ export class ForgotPassword implements OnDestroy {
     if (this.trials >= this.maxTrials) return;
 
     this.isLoading = true;
-    const email = this.forgotPasswordForm.value.email;
 
-    this.authService.recoverPassword(email).subscribe({
-      next: () => {
-        this.handleSuccess();
-      },
-      error: (err) => {
-        if (err.status === 400 || err.status === 404) {
+    // Safely extract the email string, falling back to empty string
+    const email = this.forgotPasswordForm.value.email! || '';
+
+    this.authService
+      .recoverPassword(email)
+      .pipe(takeUntilDestroyed(this.destroyRef)) // Kills the request if the component is destroyed early
+      .subscribe({
+        next: () => {
           this.handleSuccess();
-        } else {
-          this.isLoading = false;
-          this.apiError = 'A network error occurred. Please try again.';
-
-          this.cdr.detectChanges();
-
-          console.error('Password recovery failed', err);
-        }
-      },
-    });
+        },
+        error: (err) => {
+          // Excellent security practice: treating 400/404 as success to prevent email enumeration
+          if (err.status === 400 || err.status === 404) {
+            this.handleSuccess();
+          } else {
+            this.isLoading = false;
+            this.apiError = 'A network error occurred. Please try again.';
+            this.cdr.detectChanges();
+          }
+        },
+      });
   }
 
   private handleSuccess(): void {
@@ -77,7 +105,6 @@ export class ForgotPassword implements OnDestroy {
     this.cdr.detectChanges();
 
     this.startTimer();
-
   }
 
   startTimer(): void {

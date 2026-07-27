@@ -8,7 +8,13 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Auth } from '../../../core/auth/services/auth';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -26,17 +32,19 @@ import { Button } from '../../../shared/components/button/button';
   styleUrl: './reset-password.css',
 })
 export class ResetPassword implements OnInit {
-  resetPasswordForm: FormGroup;
+  resetPasswordForm!: FormGroup<{
+    password: FormControl<string | null>;
+    confirmPassword: FormControl<string | null>;
+  }>;
+
   isLoading = false;
   isSuccess = false;
   successMessage = '';
   apiError: string | null = null;
   accessToken: string | null = null;
 
-  // Signal for tracking input
   passwordValue = signal<string>('');
 
-  // Computed signals driving the UI security checklist
   hasLength = computed(() => this.passwordValue().length >= 8 && this.passwordValue().length <= 64);
   hasUpper = computed(() => /[A-Z]/.test(this.passwordValue()));
   hasLower = computed(() => /[a-z]/.test(this.passwordValue()));
@@ -49,7 +57,12 @@ export class ResetPassword implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
-  constructor() {
+  ngOnInit(): void {
+    this.initForm();
+    this.extractTokenFromURL();
+  }
+
+  private initForm(): void {
     this.resetPasswordForm = this.fb.group(
       {
         password: [
@@ -66,10 +79,9 @@ export class ResetPassword implements OnInit {
       { validators: passwordMatchValidator },
     );
 
-    // Track password changes and clean up subscription on destroy
-    this.resetPasswordForm
-      .get('password')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+    // Track password changes
+    this.resetPasswordForm.controls.password.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((val) => {
         this.passwordValue.set(val || '');
       });
@@ -77,10 +89,6 @@ export class ResetPassword implements OnInit {
 
   get resetPasswordFormControls() {
     return this.resetPasswordForm.controls;
-  }
-
-  ngOnInit(): void {
-    this.extractTokenFromURL();
   }
 
   private extractTokenFromURL(): void {
@@ -107,25 +115,32 @@ export class ResetPassword implements OnInit {
     }
 
     this.isLoading = true;
-    const newPassword = this.resetPasswordForm.value.password;
 
-    this.authService.updateUserPassword(newPassword, this.accessToken).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.isSuccess = true;
-        this.successMessage = 'Your password has been updated successfully. You can now log in.';
-        this.cdr.detectChanges();
+    const newPassword = this.resetPasswordForm.value.password || '';
 
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 3000);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.apiError = 'Failed to update password. Your link may have expired.';
-        this.cdr.detectChanges();
-        console.error('Password reset failed', err);
-      },
-    });
+    this.authService
+      .updateUserPassword(newPassword, this.accessToken)
+      .pipe(takeUntilDestroyed(this.destroyRef)) // Protects the HTTP request
+      .subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.isSuccess = true;
+          this.successMessage = 'Your password has been updated successfully. You can now log in.';
+          this.cdr.detectChanges();
+
+          // Store the timeout reference
+          const timeoutId = setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 3000);
+
+          // Protects the timeout event
+          this.destroyRef.onDestroy(() => clearTimeout(timeoutId));
+        },
+        error: () => {
+          this.isLoading = false;
+          this.apiError = 'Failed to update password. Your link may have expired.';
+          this.cdr.detectChanges();
+        },
+      });
   }
 }

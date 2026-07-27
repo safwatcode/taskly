@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ProjectPayload, ProjectResponse } from '../models/project.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -10,9 +11,8 @@ import { ProjectPayload, ProjectResponse } from '../models/project.model';
 export class ProjectService {
   private http = inject(HttpClient);
 
-  private baseURL = 'https://jmltwxyausnmtasziccs.supabase.co';
+  private baseURL = environment.supabase.url;
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
-
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
 
   getProjects(): Observable<ProjectResponse[]> {
@@ -38,9 +38,9 @@ export class ProjectService {
     );
   }
 
-  updateProject(id: string, payload: { name: string; description: string }): Observable<any> {
+  updateProject(id: string, payload: Partial<ProjectPayload>): Observable<void> {
     return this.http
-      .patch(`${this.projectsURL}?id=eq.${id}`, payload)
+      .patch<void>(`${this.projectsURL}?id=eq.${id}`, payload)
       .pipe(catchError(this.handleError.bind(this)));
   }
 
@@ -48,10 +48,8 @@ export class ProjectService {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
       errorMessage = `Network Error: ${error.error.message}`;
     } else {
-      // Server-side error (Supabase error)
       if (error.error && error.error.message) {
         errorMessage = error.error.message;
       } else {

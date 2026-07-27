@@ -1,8 +1,9 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
-import { ProjectResponse } from '../../core/project/models/project.model';
-import { ProjectService } from '../../core/project/services/project.service';
+import { ProjectResponse } from './models/project.model';
+import { ProjectService } from './services/project.service';
 import { DatePipe } from '@angular/common';
 
 @Component({
@@ -11,10 +12,10 @@ import { DatePipe } from '@angular/common';
   templateUrl: './project.html',
   styleUrl: './project.css',
 })
-export class Project {
+export class Project implements OnInit {
   private projectService = inject(ProjectService);
-  private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   projects: ProjectResponse[] = [];
   isLoading = true;
@@ -31,6 +32,7 @@ export class Project {
     this.projectService
       .getProjects()
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -39,15 +41,10 @@ export class Project {
       .subscribe({
         next: (data) => {
           this.projects = data;
-          this.cdr.detectChanges();
         },
         error: (err) => {
-          if (err.status === 401) {
-            this.router.navigate(['/login']);
-          } else {
-            this.hasError = true;
-            this.cdr.detectChanges();
-          }
+          console.error('Failed to load projects', err);
+          this.hasError = true;
         },
       });
   }

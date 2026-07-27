@@ -1,5 +1,12 @@
-import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { InputField } from '../../../shared/components/input/input';
@@ -9,6 +16,7 @@ import {
   passwordMatchValidator,
   passwordStrengthValidator,
 } from '../../../shared/validators/password.validator';
+import { SignupResponse } from '../../../core/auth/models/signup.model';
 
 @Component({
   selector: 'app-signup',
@@ -16,15 +24,29 @@ import {
   templateUrl: './signup.html',
   styleUrl: './signup.css',
 })
-export class Signup {
-  signupForm: FormGroup;
+export class Signup implements OnInit {
+  signupForm!: FormGroup<{
+    name: FormControl<string | null>;
+    email: FormControl<string | null>;
+    jobTitle: FormControl<string | null>;
+    password: FormControl<string | null>;
+    confirmPassword: FormControl<string | null>;
+  }>;
+
   isLoading = false;
+  errorMessage: string | null = null;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private authService = inject(Auth);
+  private cdr = inject(ChangeDetectorRef); // Injected for manual UI updates
+  private destroyRef = inject(DestroyRef); // Injected to manage memory cleanup
 
-  constructor() {
+  ngOnInit(): void {
+    this.initForm();
+  }
+
+  private initForm(): void {
     this.signupForm = this.fb.group(
       {
         name: [
@@ -59,7 +81,9 @@ export class Signup {
     return this.signupForm.controls;
   }
 
-  onSubmit() {
+  onSubmit(): void {
+    this.errorMessage = null;
+
     if (this.signupForm.invalid) {
       this.signupForm.markAllAsTouched();
       return;
@@ -77,25 +101,35 @@ export class Signup {
       },
     };
 
-    this.authService.signup(payload).subscribe({
-      next: (response) => {
-        this.isLoading = false;
+    this.authService
+      .signup(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.isLoading = false;
 
-        if (response.access_token) {
-          this.authService.saveSession(response.access_token, false);
-          this.router.navigate(['/project']);
-        } else {
-          // In case of email verification process
-          console.warn(
-            'Signup successful, but no token returned. Email verification may be required.',
-          );
-          this.router.navigate(['/login']);
-        }
-      },
-      error: (err) => {
-        this.isLoading = false;
-        console.error('Signup failed', err);
-      },
-    });
+          // Casting the 'unknown' response to sign up response interface
+          const res = response as SignupResponse;
+
+          if (res.access_token) {
+            this.authService.saveSession(res.access_token, false);
+            this.cdr.detectChanges();
+            this.router.navigate(['/project']);
+          } else {
+            // In case of email verification process
+            console.warn(
+              'Signup successful, but no token returned. Email verification may be required.',
+            );
+            this.cdr.detectChanges();
+            this.router.navigate(['/login']);
+          }
+        },
+        error: () => {
+          this.isLoading = false;
+          this.errorMessage =
+            'Signup failed. The email might already be in use or the server is busy.';
+          this.cdr.detectChanges();
+        },
+      });
   }
 }

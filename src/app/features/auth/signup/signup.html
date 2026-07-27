@@ -106,8 +106,8 @@
         <ul class="text-[12px] font-medium flex flex-col gap-2">
 
           <li class="flex items-center gap-2 text-slate-medium">
-            @if (formControls['password'].value?.length >= 8 && formControls['password'].value?.length <= 64) {
-              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
+            @if ((formControls['password'].value?.length ?? 0) >= 8 && (formControls['password'].value?.length ?? 0) <= 64){
+              <span class="material-symbols-outlined text-[18px] text-[#004E32]">check_circle</span>
             } @else {
               <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
@@ -116,7 +116,7 @@
 
           <li class="flex items-center gap-2 text-slate-medium">
             @if (!formControls['password'].errors?.['missingUpperLowerDigit'] && formControls['password'].value) {
-              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
+              <span class="material-symbols-outlined text-[18px] text-[#004E32]">check_circle</span>
             } @else {
               <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
@@ -125,7 +125,7 @@
 
           <li class="flex items-center gap-2 text-slate-medium">
             @if (!formControls['password'].errors?.['missingSpecial'] && formControls['password'].value) {
-              <span class="material-symbols-outlined text-[18px] text-semantic-success">check_circle</span>
+              <span class="material-symbols-outlined text-[18px] text-[#004E32]">check_circle</span>
             } @else {
               <span class="material-symbols-outlined text-[18px] text-slate-medium">radio_button_unchecked</span>
             }
