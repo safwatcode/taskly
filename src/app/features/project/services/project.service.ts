@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ProjectPayload, ProjectResponse } from '../models/project.model';
+import { PaginatedResponse, ProjectPayload, ProjectResponse } from '../models/project.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -15,10 +15,27 @@ export class ProjectService {
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
 
-  getProjects(): Observable<ProjectResponse[]> {
+  getProjects(limit: number, offset: number): Observable<PaginatedResponse<ProjectResponse>> {
     return this.http
-      .get<ProjectResponse[]>(this.rpcProjectsURL)
-      .pipe(catchError(this.handleError.bind(this)));
+      .get<ProjectResponse[]>(this.rpcProjectsURL, {
+        params: { limit, offset },
+        // Required header to force the backend to return the exact total count
+        headers: { Prefer: 'count=exact' },
+        // Return the full response object, not just the body, so we can read headers
+        observe: 'response',
+      })
+      .pipe(
+        map((response: HttpResponse<ProjectResponse[]>) => {
+          // Extract content from header
+          const contentRange = response.headers.get('Content-Range') || '0/0';
+          const totalCount = parseInt(contentRange.split('/')[1], 10);
+
+          return {
+            content: response.body || [],
+            totalElements: totalCount,
+          };
+        }),
+      );
   }
 
   addProject(payload: ProjectPayload): Observable<ProjectResponse[]> {

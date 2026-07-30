@@ -1,7 +1,7 @@
-<div class="flex flex-col flex-1 h-full p-4 md:p-8 bg-slate-50 overflow-hidden">
+<div class="flex flex-col flex-1 h-full p-4 bg-slate-50 overflow-hidden">
 
   <!-- Header Section -->
-  @if (!hasError && projects.length !== 0) {
+  @if (!hasError() && projects().length !== 0) {
     <div class="flex justify-between items-center md:items-center mb-8 shrink-0">
       <div>
         <h1 class="text-[28px] font-bold text-[#041B3C]">Projects</h1>
@@ -21,11 +21,11 @@
     </div>
   }
 
-  <!-- Main Content Area -->
-  <div class="grow flex flex-col overflow-y-auto overflow-x-hidden">
+  <!-- Main Content Area-->
+  <div #scrollContainer class="grow flex flex-col overflow-y-auto overflow-x-hidden relative">
 
     <!-- LOADING STATE -->
-    @if (isLoading) {
+    @if (isLoading()) {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="bg-white rounded-xl p-6 border border-slate-100 shadow-sm min-h-50 flex flex-col animate-pulse">
@@ -41,7 +41,7 @@
           </div>
         }
       </div>
-    } @else if (hasError) {
+    } @else if (hasError()) {
       <!-- ERROR STATE -->
       <div class="grow flex flex-col items-center justify-center text-center pb-12">
         <div class="mb-6">
@@ -61,7 +61,7 @@
           Retry Connection
         </button>
       </div>
-    } @else if (projects.length === 0) {
+    } @else if (projects().length === 0) {
       <!-- EMPTY STATE -->
       <div class="grow flex items-center justify-center">
         <div class="max-w-md w-full flex flex-col items-center text-center">
@@ -158,17 +158,16 @@
       </div>
     } @else {
       <!-- PROJECTS GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Project Cards -->
-        @for (project of projects; track project.id) {
+        @for (project of projects(); track project.id) {
           <div
-            class="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col min-h-55 cursor-pointer hover:shadow-md hover:border-slate-200 transition-all">
-
+            class="min-h-55 bg-white rounded-xl p-6 shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col cursor-pointer hover:shadow-md hover:border-slate-200 transition-all">
+            <!-- Your existing card UI -->
             <div class="flex justify-between items-start mb-3">
               <h3 class="font-bold text-[#041B3C] text-lg pr-4 mb-3">{{ project.name }}</h3>
-              <button
-                [routerLink]="['/project', project.id, 'edit']"
-                class="text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 p-1.5 rounded transition-all cursor-pointer">
+              <button [routerLink]="['/project', project.id, 'edit']"
+                      class="text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 p-1.5 rounded transition-all cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -176,56 +175,52 @@
                 </svg>
               </button>
             </div>
-
-            <p class="text-slate-500 text-sm leading-relaxed mb-6 grow line-clamp-3">
-              {{ project.description }}
-            </p>
-
-            <!-- Project Card Footer -->
+            <p class="text-slate-500 text-sm leading-relaxed mb-6 grow line-clamp-3">{{ project.description }}</p>
             <div class="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-medium">
               <span class="hidden md:inline text-slate-400 uppercase tracking-wider text-[10px]">Created At</span>
-              <div class="flex items-center gap-1.5 md:hidden text-slate-400">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </div>
               <span class="text-slate-700 md:text-slate-500">{{ project.created_at | date:'dd MMM yyyy' }}</span>
             </div>
           </div>
         }
+
         <!-- Add Project Card -->
         <div routerLink="/project/add"
-             class="hidden md:flex flex-col items-center justify-center bg-transparent rounded-xl border-2 border-dashed border-slate-200 hover:border-[#0052CC] hover:bg-blue-50/30 transition-all cursor-pointer min-h-55">
-          <div class="bg-[#F4F6FB] p-3 rounded-xl mb-4 text-[#0052CC]">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M9 15H11V11H15V9H11V5H9V9H5V11H9V15ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20ZM10 18C12.2333 18 14.125 17.225 15.675 15.675C17.225 14.125 18 12.2333 18 10C18 7.76667 17.225 5.875 15.675 4.325C14.125 2.775 12.2333 2 10 2C7.76667 2 5.875 2.775 4.325 4.325C2.775 5.875 2 7.76667 2 10C2 12.2333 2.775 14.125 4.325 15.675C5.875 17.225 7.76667 18 10 18Z"
-                fill="#041B3C"/>
-            </svg>
-          </div>
+             class="hidden md:flex flex-col items-center gap-4 justify-center bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-[#0052CC] hover:bg-blue-50/30 transition-all cursor-pointer min-h-55">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#F1F3FF"/>
+            <path
+              d="M23 29H25V25H29V23H25V19H23V23H19V25H23V29ZM24 34C22.6167 34 21.3167 33.7375 20.1 33.2125C18.8833 32.6875 17.825 31.975 16.925 31.075C16.025 30.175 15.3125 29.1167 14.7875 27.9C14.2625 26.6833 14 25.3833 14 24C14 22.6167 14.2625 21.3167 14.7875 20.1C15.3125 18.8833 16.025 17.825 16.925 16.925C17.825 16.025 18.8833 15.3125 20.1 14.7875C21.3167 14.2625 22.6167 14 24 14C25.3833 14 26.6833 14.2625 27.9 14.7875C29.1167 15.3125 30.175 16.025 31.075 16.925C31.975 17.825 32.6875 18.8833 33.2125 20.1C33.7375 21.3167 34 22.6167 34 24C34 25.3833 33.7375 26.6833 33.2125 27.9C32.6875 29.1167 31.975 30.175 31.075 31.075C30.175 31.975 29.1167 32.6875 27.9 33.2125C26.6833 33.7375 25.3833 34 24 34ZM24 32C26.2333 32 28.125 31.225 29.675 29.675C31.225 28.125 32 26.2333 32 24C32 21.7667 31.225 19.875 29.675 18.325C28.125 16.775 26.2333 16 24 16C21.7667 16 19.875 16.775 18.325 18.325C16.775 19.875 16 21.7667 16 24C16 26.2333 16.775 28.125 18.325 29.675C19.875 31.225 21.7667 32 24 32Z"
+              fill="#041B3C"/>
+          </svg>
           <span class="font-bold text-[13px] tracking-widest text-[#041B3C] uppercase">Add Project</span>
         </div>
       </div>
+    }
 
-      <!-- Pagination -->
-      <div class="hidden md:flex justify-between items-center text-sm text-slate-500 border-t border-slate-200 pt-6 shrink-0 mt-auto">
-        <span>Showing 5 of <span class="font-bold text-slate-700">24</span> active projects</span>
-        <div class="flex items-center gap-2 ">
-          <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-blue-800 hover:text-white  cursor-pointer transition duration-300">&lt;</button>
-          <button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-medium cursor-pointer hover:bg-blue-800 hover:text-white  transition duration-300">1</button>
-          <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-blue-800 hover:text-white  hover:text-white transition duration-300 font-medium cursor-pointer">2</button>
-          <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-blue-800 hover:text-white  font-medium cursor-pointer transition duration-300">&gt;</button>
-        </div>
+    <!-- This element works as a 'scroll trigger' to implement "Infinite Scroll" for mobile devices -->
+    <div #scrollTrigger class="h-4 w-full shrink-0 mt-4 md:hidden"></div>
+
+    <!-- Mobile Appending Loader -->
+    @if (isAppending()) {
+      <div class="flex justify-center md:hidden py-4 shrink-0">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003D9B]"></div>
       </div>
     }
+
   </div>
 
-  <!-- Mobile Floating Action Button  -->
-  @if (!isLoading && !hasError && projects.length > 0) {
+  @if (!isLoading() && !hasError() && projects().length > 0) {
+    <!-- Desktop Pagination Component -->
+    <div class="shrink-0 mt-4">
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="totalProjects()"
+        [pageSize]="pageSize()"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
+
+    <!-- Mobile Floating Action Button -->
     <button routerLink="/project/add"
             class="md:hidden fixed bottom-24 right-6 bg-[#003D9B] hover:bg-blue-800 text-white w-14 h-14 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/30 z-40 transition-transform active:scale-95 cursor-pointer">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -235,4 +230,5 @@
       </svg>
     </button>
   }
+
 </div>

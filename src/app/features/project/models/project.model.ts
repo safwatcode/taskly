@@ -10,3 +10,8 @@ export interface ProjectResponse {
   description: string | null;
   created_at: string;
 }
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+}

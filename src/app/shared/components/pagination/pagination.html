@@ -1,0 +1,47 @@
+<!--@if (totalPages() > 1) {-->
+<div
+  class="hidden md:flex justify-between items-center text-sm text-slate-500 border-t border-slate-200 pt-6 shrink-0 mt-auto">
+    <span>
+      Showing <span class="font-bold text-slate-700">{{ currentDisplayedCount() }}</span>
+      of  <span class="font-bold text-slate-700">{{ totalItems() }}</span>
+    active projects
+    </span>
+
+  <div class="flex items-center gap-2">
+    <button
+      (click)="prevPage()"
+      [disabled]="currentPage() === 1"
+      class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600
+         enabled:hover:bg-blue-800 enabled:hover:text-white
+         cursor-pointer transition duration-300
+         disabled:opacity-50 disabled:cursor-not-allowed">
+      &lt;
+    </button>
+
+
+    @for (page of visiblePages(); track page) {
+      <button
+        (click)="goToPage(page)"
+        [class.bg-primary]="currentPage() === page"
+        [class.text-white]="currentPage() === page"
+        [class.border]="currentPage() !== page"
+        [class.border-slate-200]="currentPage() !== page"
+        [class.text-slate-600]="currentPage() !== page"
+        class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-800 hover:text-white font-medium cursor-pointer transition duration-300">
+        {{ page }}
+      </button>
+    }
+
+    <button
+      (click)="nextPage()"
+      [disabled]="currentPage() === totalPages()"
+      class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600
+         enabled:hover:bg-blue-800 enabled:hover:text-white
+         font-medium cursor-pointer transition duration-300
+         disabled:opacity-50 disabled:cursor-not-allowed">
+      &gt;
+    </button>
+
+  </div>
+</div>
+<!--}-->
