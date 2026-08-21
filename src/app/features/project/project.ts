@@ -17,6 +17,7 @@ import { PaginatedResponse, ProjectResponse } from './models/project.model';
 import { ProjectService } from './services/project.service';
 import { DatePipe } from '@angular/common';
 import { Pagination } from '../../shared/components/pagination/pagination';
+import { ProjectContextService } from './services/project-context.service';
 
 @Component({
   selector: 'app-project',
@@ -25,11 +26,13 @@ import { Pagination } from '../../shared/components/pagination/pagination';
   styleUrl: './project.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    // Ensures the component flexes correctly within the main layout
     class: 'flex flex-col flex-1 h-full min-h-0',
   },
 })
 export class Project implements OnInit, AfterViewInit {
   private projectService = inject(ProjectService);
+  private projectContext = inject(ProjectContextService);
   private destroyRef = inject(DestroyRef);
 
   projects = signal<ProjectResponse[]>([]);
@@ -51,6 +54,7 @@ export class Project implements OnInit, AfterViewInit {
   private observer: IntersectionObserver | null = null;
 
   ngOnInit(): void {
+    this.projectContext.clearProject();
     this.executeFetch(false);
   }
 

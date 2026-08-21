@@ -1,8 +1,19 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams,
+  HttpResponse,
+} from '@angular/common/http';
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { PaginatedResponse, ProjectPayload, ProjectResponse } from '../models/project.model';
+import {
+  PaginatedResponse,
+  ProjectMemberResponse,
+  ProjectPayload,
+  ProjectResponse,
+} from '../models/project.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -14,6 +25,7 @@ export class ProjectService {
   private baseURL = environment.supabase.url;
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
+  private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
 
   getProjects(limit: number, offset: number): Observable<PaginatedResponse<ProjectResponse>> {
     return this.http
@@ -58,6 +70,13 @@ export class ProjectService {
   updateProject(id: string, payload: Partial<ProjectPayload>): Observable<void> {
     return this.http
       .patch<void>(`${this.projectsURL}?id=eq.${id}`, payload)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getProjectMembers(projectId: string): Observable<ProjectMemberResponse[]> {
+    const params = new HttpParams().set('project_id', `eq.${projectId}`);
+    return this.http
+      .get<ProjectMemberResponse[]>(this.rpcProjectMembersURL, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
 

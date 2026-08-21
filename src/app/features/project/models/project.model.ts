@@ -15,3 +15,11 @@ export interface PaginatedResponse<T> {
   content: T[];
   totalElements: number;
 }
+
+export interface ProjectMemberResponse {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role: 'Owner' | 'Admin' | 'Member' | 'Viewer';
+}

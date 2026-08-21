@@ -1,0 +1,254 @@
+<div class="flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden">
+
+  <!-- Header Section -->
+  @if (!errorMessage) {
+    <div class="mb-6 md:mb-8 shrink-0">
+
+      <!-- Breadcrumb -->
+      <div class="hidden md:flex text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase items-center gap-2">
+        <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">PROJECTS</a>
+        <span>&rsaquo;</span>
+        <span class="truncate max-w-37.5">{{ projectName }}</span>
+        <span>&rsaquo;</span>
+        <span class="text-[#003D9B]">MEMBERS</span>
+      </div>
+
+      <div class="flex justify-center md:justify-between items-center mt-2 md:mt-3">
+        <h1 class="text-[28px] font-bold text-[#041B3C] tracking-tight text-center md:text-left">
+          Project Members
+        </h1>
+
+        <button
+          class="hidden md:flex bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-2.5 px-5 rounded-lg items-center gap-2 transition-colors shadow-sm cursor-pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" y1="8" x2="19" y2="14"></line>
+            <line x1="22" y1="11" x2="16" y2="11"></line>
+          </svg>
+          Invite Member
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Main Content Area -->
+  <div class="grow flex flex-col overflow-y-auto overflow-x-hidden relative pb-28 md:pb-0">
+
+    @if (isLoading) {
+      <!-- Loading State -->
+      <div
+        class="md:bg-white md:rounded-xl md:shadow-[0_2px_8px_rgb(0,0,0,0.04)] md:border md:border-slate-100 md:overflow-hidden">
+
+        <div
+          class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">
+          <div class="col-span-6">MEMBER</div>
+          <div class="col-span-4">ROLE</div>
+          <div class="col-span-2 text-right">ACTIONS</div>
+        </div>
+
+        <!-- Skeleton Rows-->
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div
+            class="bg-white rounded-2xl p-4 shadow-sm mb-4 md:mb-0 md:bg-transparent md:rounded-none md:p-0 md:shadow-none md:border-b md:border-slate-50 flex items-start justify-between md:grid md:grid-cols-12 md:gap-4 md:px-6 md:py-5 animate-pulse">
+
+            <div class="flex items-center gap-4 md:col-span-6 w-full min-w-0">
+              <div class="w-12 h-12 md:w-11 md:h-11 bg-slate-200 rounded-xl shrink-0"></div>
+              <div class="space-y-2 w-full max-w-45">
+                <div class="h-4 bg-slate-200 rounded-md w-full"></div>
+                <div class="h-3 bg-slate-100 rounded-md w-3/4"></div>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-3 md:hidden shrink-0 ml-2">
+              <div class="h-4 bg-slate-200 rounded w-12"></div>
+              <div class="h-4 w-1 bg-slate-200 rounded-full mt-1"></div>
+            </div>
+
+            <div class="hidden md:flex md:col-span-4">
+              <div class="h-6 bg-slate-200 rounded-full w-16"></div>
+            </div>
+            <div class="hidden md:flex md:col-span-2 justify-end pl-4">
+              <div class="h-6 w-1 flex flex-col justify-between items-center py-1 gap-1">
+                <div class="w-1 h-1 bg-slate-200 rounded-full"></div>
+                <div class="w-1 h-1 bg-slate-200 rounded-full"></div>
+                <div class="w-1 h-1 bg-slate-200 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+    } @else if (errorMessage) {
+      <!-- Error State -->
+      <div class="grow flex flex-col items-center justify-center text-center pb-12">
+        <div class="mb-6">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="12" fill="#FFDAD6"/>
+            <path
+              d="M41.75 44.375L38.4375 41.125H25.125C23.2083 41.125 21.5833 40.4583 20.25 39.125C18.9167 37.7917 18.25 36.1667 18.25 34.25C18.25 32.6458 18.7448 31.2188 19.7344 29.9688C20.724 28.7188 22 27.9167 23.5625 27.5625C23.625 27.3958 23.6875 27.2344 23.75 27.0781C23.8125 26.9219 23.875 26.75 23.9375 26.5625L18.75 21.375L20.5 19.625L43.5 42.625L41.75 44.375ZM25.125 38.625H35.9375L25.875 28.5625C25.8333 28.7917 25.8021 29.0104 25.7812 29.2188C25.7604 29.4271 25.75 29.6458 25.75 29.875H25.125C23.9167 29.875 22.8854 30.3021 22.0312 31.1562C21.1771 32.0104 20.75 33.0417 20.75 34.25C20.75 35.4583 21.1771 36.4896 22.0312 37.3438C22.8854 38.1979 23.9167 38.625 25.125 38.625ZM44 39.5625L42.1875 37.8125C42.5417 37.5208 42.8073 37.1823 42.9844 36.7969C43.1615 36.4115 43.25 35.9792 43.25 35.5C43.25 34.625 42.9479 33.8854 42.3438 33.2812C41.7396 32.6771 41 32.375 40.125 32.375H38.25V29.875C38.25 28.1458 37.6406 26.6719 36.4219 25.4531C35.2031 24.2344 33.7292 23.625 32 23.625C31.4375 23.625 30.8958 23.6927 30.375 23.8281C29.8542 23.9635 29.3542 24.1771 28.875 24.4688L27.0625 22.6562C27.7917 22.1562 28.5677 21.776 29.3906 21.5156C30.2135 21.2552 31.0833 21.125 32 21.125C34.4375 21.125 36.5052 21.974 38.2031 23.6719C39.901 25.3698 40.75 27.4375 40.75 29.875C42.1875 30.0417 43.3802 30.6615 44.3281 31.7344C45.276 32.8073 45.75 34.0625 45.75 35.5C45.75 36.3125 45.5938 37.0677 45.2812 37.7656C44.9688 38.4635 44.5417 39.0625 44 39.5625Z"
+              fill="#BA1A1A"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-[#041B3C] mb-2">Something went wrong</h2>
+        <p class="text-slate-500 mb-6 max-w-sm leading-relaxed">
+          {{ errorMessage }}
+        </p>
+        <button (click)="retryConnection()"
+                class="bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-2.5 px-6 rounded-lg transition-colors shadow-sm cursor-pointer">
+          Retry Connection
+        </button>
+      </div>
+
+    } @else if (members.length === 0) {
+      <!-- Empty state -->
+      <div class="grow flex items-center justify-center">
+        <div class="max-w-md w-full flex flex-col items-center text-center">
+          <div class="bg-[#F4F6FB] rounded-xl w-64 h-64 flex items-center justify-center relative mb-8">
+            <svg width="200" height="200" viewBox="0 0 288 288" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_15_619)">
+                <rect width="288" height="288" rx="8" fill="#F1F3FF"/>
+                <g opacity="0.1">
+                  <rect width="288" height="288" fill="url(#paint0_linear_15_619)"/>
+                  <rect width="288" height="288" fill="url(#paint1_linear_15_619)"/>
+                </g>
+                <rect x="96" y="96" width="96" height="96" rx="12" fill="#D7E2FF"/>
+                <path
+                  d="M131.837 165.154L131.5 162.538L137.952 144.74C138.288 145.035 138.637 145.268 138.998 145.44C139.358 145.611 139.731 145.753 140.115 145.865L133.817 163.298L131.837 165.154ZM156.163 165.154L154.183 163.298L147.885 145.865C148.269 145.753 148.642 145.611 149.002 145.44C149.363 145.268 149.712 145.035 150.048 144.74L156.5 162.538L156.163 165.154ZM144 141.596C142.269 141.596 140.795 140.987 139.577 139.769C138.359 138.551 137.75 137.077 137.75 135.346C137.75 133.721 138.259 132.361 139.276 131.267C140.294 130.172 141.452 129.519 142.75 129.308V122.846H145.25V129.308C146.548 129.519 147.706 130.172 148.724 131.267C149.741 132.361 150.25 133.721 150.25 135.346C150.25 137.077 149.641 138.551 148.423 139.769C147.205 140.987 145.731 141.596 144 141.596ZM144 139.096C145.029 139.096 145.911 138.728 146.647 137.993C147.382 137.257 147.75 136.375 147.75 135.346C147.75 134.317 147.382 133.435 146.647 132.7C145.911 131.964 145.029 131.596 144 131.596C142.971 131.596 142.089 131.964 141.353 132.7C140.618 133.435 140.25 134.317 140.25 135.346C140.25 136.375 140.618 137.257 141.353 137.993C142.089 138.728 142.971 139.096 144 139.096Z"
+                  fill="#003D9B"/>
+              </g>
+              <defs>
+                <linearGradient id="paint0_linear_15_619" x1="0" y1="144" x2="288" y2="144"
+                                gradientUnits="userSpaceOnUse">
+                  <stop offset="0.0416667" stop-color="#003D9B"/>
+                  <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="paint1_linear_15_619" x1="144" y1="0" x2="144" y2="288"
+                                gradientUnits="userSpaceOnUse">
+                  <stop offset="0.0416667" stop-color="#003D9B"/>
+                  <stop offset="0.0416667" stop-color="#003D9B" stop-opacity="0"/>
+                </linearGradient>
+                <clipPath id="clip0_15_619">
+                  <rect width="288" height="288" rx="8" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <h2 class="text-3xl font-bold text-[#041B3C] mb-3">No Members Yet</h2>
+          <p class="text-slate-500 mb-8 leading-relaxed">
+            There are currently no members assigned to this project. Invite your colleagues to start collaborating.
+          </p>
+          <button
+            class="bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-md shadow-blue-900/20">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            Invite Member
+          </button>
+        </div>
+      </div>
+
+    } @else {
+      <!-- Members List -->
+      <div
+        class="md:bg-white md:rounded-xl md:shadow-[0_2px_8px_rgb(0,0,0,0.04)] md:border md:border-slate-100 md:overflow-hidden">
+        <div
+          class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">
+          <div class="col-span-6">MEMBER</div>
+          <div class="col-span-4">ROLE</div>
+          <div class="col-span-2 text-right">ACTIONS</div>
+        </div>
+
+        <!-- Members Data Rows -->
+        @for (member of members; track member.id) {
+          <div
+            class="bg-white rounded-2xl p-4 shadow-sm mb-4 md:mb-0 md:bg-transparent md:rounded-none md:p-0 md:shadow-none md:border-b md:border-slate-50 flex items-center justify-between md:grid md:grid-cols-12 md:gap-4 md:px-6 md:py-4 md:hover:bg-slate-50/50 transition-colors duration-150">
+
+            <div class="flex items-center gap-4 md:col-span-6 min-w-0">
+              <!-- Avatar -->
+              @if (member.avatar) {
+                <div
+                  class="w-12 h-12 md:w-11 md:h-11 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-100">
+                  <img [src]="member.avatar" [alt]="member.name || 'N/A'" class="w-full h-full object-cover">
+                </div>
+              } @else {
+                <div
+                  class="w-12 h-12 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-[15px] md:text-[13px] font-bold shrink-0 border border-white/50 shadow-sm"
+                  [ngClass]="getAvatarColorClass(member.name)">
+                  {{ getInitials(member.name) }}
+                </div>
+              }
+
+              <!-- Name & Email -->
+              <div class="truncate min-w-0">
+                <div class="text-[15px] font-bold text-[#041B3C] truncate">
+                  {{ member.name ? member.name : 'N/A' }}
+                </div>
+                <div class="text-[13px] text-slate-500 truncate mt-0.5">{{ member.email }}</div>
+              </div>
+            </div>
+
+            <!-- Role -->
+            <div class="flex flex-col items-end justify-between h-12 md:hidden shrink-0 ml-2">
+              <span
+                class="px-2 py-1 text-[9px] font-bold rounded-md tracking-widest uppercase bg-blue-100 text-[#003D9B]">
+                {{ member.role }}
+              </span>
+
+              <button
+                class="text-slate-400 hover:text-[#041B3C] rounded transition-colors focus:outline-none cursor-pointer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Mobile Role -->
+            <div class="hidden md:flex md:col-span-4 items-center">
+              <span class="px-3.5 py-1 text-[10px] font-bold rounded-full tracking-widest uppercase"
+                    [ngClass]="getRoleBadgeClass(member.role)">
+                {{ member.role }}
+              </span>
+            </div>
+
+            <!-- Action Dots -->
+            <div class="hidden md:flex md:col-span-2 justify-end items-center">
+              <button
+                class="p-2 text-slate-400 hover:text-[#041B3C] rounded-md hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Mobile Floating Action Button -->
+  @if (!isLoading && !errorMessage) {
+    <button
+      class="md:hidden fixed bottom-24 right-6 bg-[#003D9B] hover:bg-blue-800 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/30 z-40 transition-transform active:scale-95 cursor-pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <line x1="19" y1="8" x2="19" y2="14"></line>
+        <line x1="22" y1="11" x2="16" y2="11"></line>
+      </svg>
+    </button>
+  }
+
+</div>

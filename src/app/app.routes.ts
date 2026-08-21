@@ -32,6 +32,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/project/project-form/project-form').then((m) => m.ProjectForm),
           },
+          {
+            path: ':projectId/members',
+            loadComponent: () =>
+              import('./features/project/project-members/project-members').then(
+                (m) => m.ProjectMembers,
+              ),
+          },
         ],
       },
       { path: '', redirectTo: 'project', pathMatch: 'full' },

@@ -75,7 +75,8 @@ export class ProjectForm implements OnInit {
     this.projectService
       .getProjectById(this.projectId)
       .pipe(
-        takeUntilDestroyed(this.destroyRef), // Prevents memory leaks if component is destroyed early
+        // Prevents memory leaks if component is destroyed early
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.isPageLoading = false;
           this.cdr.detectChanges();

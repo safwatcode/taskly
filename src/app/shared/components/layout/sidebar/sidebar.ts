@@ -11,7 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/auth';
-import { ProjectContextService } from '../../../../features/project/services/project-context.service'; // Adjust path
+import { ProjectContextService } from '../../../../features/project/services/project-context.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -62,6 +62,13 @@ export class Sidebar implements OnInit {
       }
       return newState;
     });
+  }
+
+  // For mobiles only, drawer is closed when a sidebar item is clicked
+  onNavItemClick(): void {
+    if (this.isMobileOpen) {
+      this.closeMobile.emit();
+    }
   }
 
   onLogout(): void {
