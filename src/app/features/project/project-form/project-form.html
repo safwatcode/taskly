@@ -1,170 +1,180 @@
-<!-- Loading State Skeleton -->
-@if (isPageLoading) {
-  <div class="max-w-4xl mx-auto p-4 md:p-8 animate-pulse">
-    <div class="h-8 w-48 bg-slate-200 rounded mb-8"></div>
-    <div class="h-125 bg-white rounded-xl shadow-sm border border-slate-100"></div>
-  </div>
-} @else {
+<!-- Scrolling Wrapper -->
+<div class="flex flex-col flex-1 h-full overflow-y-auto pb-8">
 
-  <!-- Breadcrumbs & Title -->
-  <div class="p-6 pb-0 hidden md:block">
-    <div class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-      <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">Projects</a>
-      <span>›</span>
-
-      @if (isEditMode) {
-        <span class="truncate max-w-37.5">{{ originalProjectName }}</span>
-        <span>›</span>
-        <span class="text-[#003D9B]">Edit</span>
-      } @else {
-        <span class="text-[#003D9B]">Add New Project</span>
-      }
+  <!-- Loading State -->
+  @if (isPageLoading) {
+    <div class="max-w-4xl mx-auto w-full p-4 md:p-8 animate-pulse">
+      <div class="h-8 w-48 bg-slate-200 rounded mb-8"></div>
+      <div class="h-125 bg-white rounded-xl shadow-sm border border-slate-100"></div>
     </div>
-    <h1 class="text-3xl font-bold text-[#041B3C]">
-      {{ isEditMode ? 'Edit Project' : 'Add New Project' }}
-    </h1>
-  </div>
+  } @else {
 
-  <div class="max-w-4xl mx-auto md:p-2">
+    <!-- Breadcrumbs & Title -->
+    <div class="p-6 pb-0 hidden md:block shrink-0">
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+        <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">Projects</a>
+        <span>›</span>
 
-    <!-- Form Card -->
-    <div class="md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-100 overflow-hidden">
-
-      <!-- Card Header -->
-      <div class="p-6 md:p-8 md:border-b border-slate-100 flex items-start gap-4">
-        <div class="hidden md:flex bg-[#F0F4FF] text-[#003D9B] p-3 rounded-lg shrink-0">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Used Edit SVG, but it works perfectly for both contexts -->
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-        </div>
-        <div>
-          <!-- Mobile header -->
-          <h2 class="text-2xl md:text-xl font-bold text-[#041B3C] mb-1">
-            {{ isEditMode ? 'Edit Project' : 'Initialize New Project' }}
-          </h2>
-          <p class="text-slate-500 text-sm">Define the scope and foundational details of your project.</p>
-        </div>
+        @if (isEditMode) {
+          <span class="truncate max-w-37.5">{{ originalProjectName }}</span>
+          <span>›</span>
+          <span class="text-[#003D9B]">Edit</span>
+        } @else {
+          <span class="text-[#003D9B]">Add New Project</span>
+        }
       </div>
+      <h1 class="text-3xl font-bold text-[#041B3C]">
+        {{ isEditMode ? 'Edit Project' : 'Add New Project' }}
+      </h1>
+    </div>
 
-      <!-- Main Form -->
-      <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="px-6 pb-6 md:p-8">
+    <div class="max-w-4xl mx-auto w-full md:p-2 mt-4 md:mt-0 grow">
 
-        <!-- API Success Alert -->
-        @if (successMessage) {
-          <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 flex items-start gap-3">
-            <svg class="w-5 h-5 text-green-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      <!-- Form Card -->
+      <div class="md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-100 overflow-hidden">
+
+        <!-- Card Header -->
+        <div class="p-6 md:p-8 md:border-b border-slate-100 flex items-start gap-4">
+          <div class="hidden md:flex bg-[#F0F4FF] text-[#003D9B] p-3 rounded-lg shrink-0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
-            <div>
-              <h3 class="text-sm font-bold text-green-800">Success</h3>
-              <p class="text-sm text-green-700 mt-1">{{ successMessage }}</p>
-            </div>
           </div>
-        }
-
-        <!-- API Error Alert -->
-        @if (errorMessage) {
-          <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
-            <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <div>
-              <h3 class="text-sm font-bold text-red-800">{{ isEditMode ? 'Update Failed' : 'Submission Failed' }}</h3>
-              <p class="text-sm text-red-700 mt-1">{{ errorMessage }}</p>
-            </div>
+          <div>
+            <h2 class="text-2xl md:text-xl font-bold text-[#041B3C] mb-1">
+              {{ isEditMode ? 'Edit Project' : 'Initialize New Project' }}
+            </h2>
+            <p class="text-slate-500 text-sm">Define the scope and foundational details of your project.</p>
           </div>
-        }
+        </div>
 
-        <!-- Project Title Field -->
-        <div class="mb-5">
-          <app-input
-            inputId="name"
-            label="Project Title *"
-            type="text"
-            placeholder="e.g. Website Redesign"
-            [control]="$any(controls['name'])">
-          </app-input>
+        <!-- Main Form -->
+        <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="px-6 pb-6 md:p-8">
 
-          <!-- Error Message-->
-          @if (controls['name'].invalid && controls['name'].touched) {
-            <div class="flex items-center gap-1.5 text-red-600 text-xs font-medium mt-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- API Success Alert -->
+          @if (successMessage) {
+            <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 flex items-start gap-3">
+              <svg class="w-5 h-5 text-green-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div>
+                <h3 class="text-sm font-bold text-green-800">Success</h3>
+                <p class="text-sm text-green-700 mt-1">{{ successMessage }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- API Error Alert -->
+          @if (errorMessage) {
+            <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              @if (controls['name'].errors?.['required']) {
-                <span>Project name is required.</span>
-              } @else if (controls['name'].errors?.['minlength']) {
-                <span>Project Name must be at least 3 characters.</span>
-              } @else if (controls['name'].errors?.['maxlength']) {
-                <span>Project name cannot exceed 100 characters.</span>
-              }
+              <div>
+                <h3 class="text-sm font-bold text-red-800">{{ isEditMode ? 'Update Failed' : 'Submission Failed' }}</h3>
+                <p class="text-sm text-red-700 mt-1">{{ errorMessage }}</p>
+              </div>
             </div>
           }
-        </div>
 
-        <!-- Description Field -->
-        <div class="mb-6 md:mb-8">
-          <div class="flex justify-between items-end mb-2">
-            <label for="description" class="block text-xs font-bold text-slate-600 tracking-wider uppercase">
-              Description
-            </label>
-            <span class="text-xs text-slate-400">Optional</span>
-          </div>
+          <!-- Project Title Field -->
+          <div class="mb-5">
+            <app-input
+              inputId="name"
+              label="Project Title *"
+              type="text"
+              placeholder="e.g. Website Redesign"
+              [control]="$any(controls['name'])">
+            </app-input>
 
-          <textarea
-            id="description"
-            formControlName="description"
-            rows="3"
-            [class.border-red-500]="controls['description'].invalid && controls['description'].touched"
-            class="w-full bg-[#E6EEF9] text-[#041B3C] border-2 border-transparent focus:border-[#003D9B] focus:bg-white rounded-lg px-4 py-3 outline-none transition-all resize-none font-medium"
-            placeholder="Provide a high-level overview of the project's architectural objectives and key milestones..."></textarea>
-
-          <!-- Character Count / Error -->
-          <div class="flex justify-end mt-2">
-            @if (controls['description'].invalid && controls['description'].touched) {
-              <span class="text-red-500 text-xs flex-1">Description cannot exceed 500 characters.</span>
+            @if (controls['name'].invalid && controls['name'].touched) {
+              <div class="flex items-center gap-1.5 text-red-600 text-xs font-medium mt-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                @if (controls['name'].errors?.['required']) {
+                  <span>Project name is required.</span>
+                } @else if (controls['name'].errors?.['minlength']) {
+                  <span>Project Name must be at least 3 characters.</span>
+                } @else if (controls['name'].errors?.['maxlength']) {
+                  <span>Project name cannot exceed 100 characters.</span>
+                }
+              </div>
             }
-            <span class="text-xs font-medium" [class.text-red-500]="descriptionLength > 500" [class.text-slate-500]="descriptionLength <= 500">
-              {{ descriptionLength }} / 500
-            </span>
           </div>
+
+          <!-- Description Field -->
+          <div class="mb-6 md:mb-8">
+            <div class="flex justify-between items-end mb-2">
+              <label for="description" class="block text-xs font-bold text-slate-600 tracking-wider uppercase">
+                Description
+              </label>
+              <span class="text-xs text-slate-400">Optional</span>
+            </div>
+
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="3"
+              [class.border-red-500]="controls['description'].invalid && controls['description'].touched"
+              class="w-full bg-[#E6EEF9] text-[#041B3C] border-2 border-transparent focus:border-[#003D9B] focus:bg-white rounded-lg px-4 py-3 outline-none transition-all resize-none font-medium"
+              placeholder="Provide a high-level overview of the project's architectural objectives and key milestones..."></textarea>
+
+            <div class="flex justify-end mt-2">
+              @if (controls['description'].invalid && controls['description'].touched) {
+                <span class="text-red-500 text-xs flex-1">Description cannot exceed 500 characters.</span>
+              }
+              <span class="text-xs font-medium" [class.text-red-500]="descriptionLength > 500"
+                    [class.text-slate-500]="descriptionLength <= 500">
+                {{ descriptionLength }} / 500
+              </span>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div
+            class="flex flex-col-reverse md:flex-row items-center justify-between pt-2 md:pt-6 md:border-t border-slate-100 gap-3 md:gap-0">
+            <button type="button" (click)="onCancel()"
+                    class="w-full md:w-auto text-[#003D9B] font-semibold hover:text-[#041B3C] px-4 py-3 md:py-2 transition-colors cursor-pointer text-center">
+              Back
+            </button>
+
+            <button
+              type="submit"
+              [disabled]="isSubmitting || successMessage"
+              class="w-full md:w-auto bg-[#003D9B] hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3.5 md:py-3 px-8 rounded-lg transition-colors cursor-pointer shadow-md shadow-blue-900/20">
+              {{ isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Project') }}
+            </button>
+          </div>
+        </form>
+
+        <!-- Footer (Pro Tip part) -->
+        <div
+          class="bg-[#F4F7FF] md:bg-[#F8FAFC] rounded-xl md:rounded-none md:border-t border-slate-100 p-5 mx-6 mb-6 md:m-0 md:px-8 flex items-start gap-3">
+          <svg class="hidden md:block w-5 h-5 text-slate-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+            <path
+              d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+          </svg>
+          <p class="text-sm text-[#475569]">
+            <strong class="text-[#1E293B] block md:inline mb-1 md:mb-0">Pro Tip</strong>
+            You can invite project members and assign epics immediately after the initial creation process.
+          </p>
         </div>
 
-        <!-- Form Actions -->
-        <div class="flex flex-col-reverse md:flex-row items-center justify-between pt-2 md:pt-6 md:border-t border-slate-100 gap-3 md:gap-0">
-          <button type="button" (click)="onCancel()" class="w-full md:w-auto text-[#003D9B] font-semibold hover:text-[#041B3C] px-4 py-3 md:py-2 transition-colors cursor-pointer text-center">
-            Back
-          </button>
-
-          <button
-            type="submit"
-            [disabled]="isSubmitting || successMessage"
-            class="w-full md:w-auto bg-[#003D9B] hover:bg-blue-800 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3.5 md:py-3 px-8 rounded-lg transition-colors cursor-pointer shadow-md shadow-blue-900/20">
-            {{ isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Project') }}
-          </button>
-        </div>
-      </form>
-
-      <!-- Footer (Pro Tip) -->
-      <div class="bg-[#F4F7FF] md:bg-[#F8FAFC] rounded-xl md:rounded-none md:border-t border-slate-100 p-5 mx-6 mb-6 md:m-0 md:px-8 flex items-start gap-3">
-        <svg class="hidden md:block w-5 h-5 text-slate-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18h6"></path>
-          <path d="M10 22h4"></path>
-          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
-        </svg>
-        <p class="text-sm text-[#475569]">
-          <strong class="text-[#1E293B] block md:inline mb-1 md:mb-0">Pro Tip</strong>
-          You can invite project members and assign epics immediately after the initial creation process.
-        </p>
       </div>
-
     </div>
-  </div>
-}
+  }
+</div>

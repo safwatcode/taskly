@@ -13,6 +13,9 @@ import { InputField } from '../../../shared/components/input/input';
   imports: [RouterLink, ReactiveFormsModule, InputField],
   templateUrl: './project-form.html',
   styleUrl: './project-form.css',
+  host: {
+    class: 'flex flex-col flex-1 h-full min-h-0',
+  },
 })
 export class ProjectForm implements OnInit {
   // Form and State Variables
