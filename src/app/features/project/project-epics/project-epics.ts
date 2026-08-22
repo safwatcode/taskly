@@ -1,45 +1,37 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { ProjectService } from '../services/project.service';
 import { ProjectContextService } from '../services/project-context.service';
-import { ProjectMemberResponse } from '../models/project.model';
-
-// For fetching user profile data to solve getting user's name problem in members list
-import { Auth } from '../../../core/auth/services/auth';
-import { UserProfileResponse } from '../../../core/auth/models/user-profile.model';
+import { ProjectEpicResponse } from '../models/project.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+import { DatePipe, NgClass } from '@angular/common';
 
 @Component({
-  selector: 'app-project-members',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './project-members.html',
-  styleUrls: ['./project-members.css'],
-  host: {
-    class: 'flex flex-col flex-1 h-full min-h-0',
-  },
+  selector: 'app-project-epics',
+  imports: [DatePipe, NgClass, RouterLink],
+  templateUrl: './project-epics.html',
+  styleUrl: './project-epics.css',
 })
-export class ProjectMembers implements OnInit {
+export class ProjectEpics implements OnInit {
   private route = inject(ActivatedRoute);
   private projectService = inject(ProjectService);
   private projectContext = inject(ProjectContextService);
-  private authService = inject(Auth);
   private destroyRef = inject(DestroyRef);
   private cdr = inject(ChangeDetectorRef);
 
-  members: ProjectMemberResponse[] = [];
+  // State properties
+  epics: ProjectEpicResponse[] = [];
   isLoading = true;
   errorMessage: string | null = null;
+
   projectName = '';
 
   ngOnInit(): void {
-    this.fetchProjectMembers();
+    this.fetchProjectEpics();
   }
 
-  private fetchProjectMembers(): void {
+  private fetchProjectEpics(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const projectId = params.get('projectId');
 
@@ -62,47 +54,22 @@ export class ProjectMembers implements OnInit {
     this.errorMessage = null;
     this.cdr.detectChanges();
 
-    // Fetching Project, Members, and Current User Profile simultaneously
+    // Use forkJoin to run both API calls concurrently
     forkJoin({
       project: this.projectService.getProjectById(projectId),
-      members: this.projectService.getProjectMembers(projectId),
-
-      // catchError ensures that if the Auth fetch fails, it doesn't break the whole page
-      userProfile: this.authService.getUserProfile().pipe(catchError(() => of(null))),
+      epics: this.projectService.getProjectEpics(projectId),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
           this.projectName = data.project.name;
-
-          // Extract the logged-in user's name and email from the Auth token. As we did in the navbar (this is the issue)
-          let activeUserName: string | null = null;
-          let activeUserEmail: string | null = null;
-
-          if (data.userProfile) {
-            const res = data.userProfile as UserProfileResponse;
-            activeUserName = res.user_metadata?.name || null;
-            activeUserEmail = res.email || res.user_metadata?.email || null;
-          }
-
-          // Go through the members. If a member is the logged-in user, and the database name is missing, inject the Auth (Sign-up data) name.
-          this.members = data.members.map((member) => {
-            if (
-              member.email === activeUserEmail &&
-              (!member.name || !member.name.trim()) &&
-              activeUserName
-            ) {
-              return { ...member, name: activeUserName };
-            }
-            return member;
-          });
-
+          this.epics = data.epics;
           this.isLoading = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.errorMessage =
-            "We're having trouble retrieving your project members right now. Please try again in a moment.";
+            "We're having trouble retrieving your project epics right now. Please try again in a moment.";
           this.isLoading = false;
           this.cdr.detectChanges();
         },
@@ -119,7 +86,8 @@ export class ProjectMembers implements OnInit {
     }
   }
 
-  // UI helpers
+  // UI Helpers
+
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';
 
@@ -145,19 +113,5 @@ export class ProjectMembers implements OnInit {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     return colors[Math.abs(hash) % colors.length];
-  }
-
-  getRoleBadgeClass(role: string): string {
-    switch (role?.toUpperCase()) {
-      case 'OWNER':
-        return 'bg-[#0052CC] text-white';
-      case 'ADMIN':
-        return 'bg-blue-100 text-[#0052CC]';
-      case 'MEMBER':
-      case 'VIEWER':
-        return 'bg-slate-200 text-slate-600';
-      default:
-        return 'bg-slate-100 text-slate-500';
-    }
   }
 }

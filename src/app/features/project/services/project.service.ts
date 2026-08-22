@@ -10,6 +10,7 @@ import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {
   PaginatedResponse,
+  ProjectEpicResponse,
   ProjectMemberResponse,
   ProjectPayload,
   ProjectResponse,
@@ -24,6 +25,8 @@ export class ProjectService {
 
   private baseURL = environment.supabase.url;
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
+  private projectEpicsURL = `${this.baseURL}/rest/v1/project_epics`;
+
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
 
@@ -77,6 +80,14 @@ export class ProjectService {
     const params = new HttpParams().set('project_id', `eq.${projectId}`);
     return this.http
       .get<ProjectMemberResponse[]>(this.rpcProjectMembersURL, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getProjectEpics(projectId: string): Observable<ProjectEpicResponse[]> {
+    const params = new HttpParams().set('project_id', `eq.${projectId}`);
+
+    return this.http
+      .get<ProjectEpicResponse[]>(this.projectEpicsURL, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
 

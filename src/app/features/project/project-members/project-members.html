@@ -1,7 +1,7 @@
 <div class="flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden">
 
   <!-- Header Section -->
-  @if (!errorMessage) {
+  @if (!errorMessage && members.length !== 0) {
     <div class="mb-6 md:mb-8 shrink-0">
 
       <!-- Breadcrumb -->

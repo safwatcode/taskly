@@ -185,15 +185,14 @@
         <!-- Project Cards -->
         @for (project of projects(); track project.id) {
 
-          <!-- FIX: Added [routerLink] here to make the entire card clickable -->
           <div
-            [routerLink]="['/project', project.id, 'members']"
+            [routerLink]="['/project', project.id, 'epics']"
             class="h-full min-h-50 md:min-h-0 bg-white rounded-xl p-6 shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col cursor-pointer hover:shadow-md hover:border-slate-200 transition-all">
 
             <div class="flex justify-between items-start mb-3">
               <h3 class="font-bold text-[#041B3C] text-lg pr-4 mb-3">{{ project.name }}</h3>
 
-              <!-- Stop propagation is correctly placed here! -->
+              <!-- Stop propagation -->
               <button [routerLink]="['/project', project.id, 'edit']"
                       (click)="$event.stopPropagation()"
                       class="text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 p-1.5 rounded transition-all cursor-pointer">

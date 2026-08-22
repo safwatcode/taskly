@@ -39,6 +39,11 @@ export const routes: Routes = [
                 (m) => m.ProjectMembers,
               ),
           },
+          {
+            path: ':projectId/epics',
+            loadComponent: () =>
+              import('./features/project/project-epics/project-epics').then((m) => m.ProjectEpics),
+          },
         ],
       },
       { path: '', redirectTo: 'project', pathMatch: 'full' },
