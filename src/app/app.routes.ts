@@ -41,8 +41,22 @@ export const routes: Routes = [
           },
           {
             path: ':projectId/epics',
-            loadComponent: () =>
-              import('./features/project/project-epics/project-epics').then((m) => m.ProjectEpics),
+            children: [
+              {
+                path: '',
+                loadComponent: () =>
+                  import('./features/project/project-epics/project-epics').then(
+                    (m) => m.ProjectEpics,
+                  ),
+              },
+              {
+                path: 'new',
+                loadComponent: () =>
+                  import('./features/project/project-epics/add-project-epic/add-project-epic').then(
+                    (m) => m.AddProjectEpic,
+                  ),
+              },
+            ],
           },
         ],
       },

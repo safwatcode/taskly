@@ -49,6 +49,7 @@ export class ProjectForm implements OnInit {
     });
   }
 
+  // Helper for template to easily access form controls
   get controls() {
     return this.projectForm.controls;
   }

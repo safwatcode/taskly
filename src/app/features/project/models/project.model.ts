@@ -21,7 +21,7 @@ export interface PaginatedResponse<T> {
 // Project Members
 export interface ProjectMemberResponse {
   id: string;
-  name: string;
+  name?: string;
   email: string;
   avatar: string | null;
   role: 'Owner' | 'Admin' | 'Member' | 'Viewer';
@@ -44,4 +44,13 @@ export interface ProjectEpicResponse {
   created_at: string;
   created_by: EpicUserSummary;
   assignee: EpicUserSummary;
+}
+
+// Add Project Epic
+export interface EpicPayload {
+  title: string;
+  description?: string;
+  assignee_id?: string;
+  project_id: string;
+  deadline?: string;
 }

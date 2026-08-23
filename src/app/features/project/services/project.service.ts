@@ -9,6 +9,7 @@ import {
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {
+  EpicPayload,
   PaginatedResponse,
   ProjectEpicResponse,
   ProjectMemberResponse,
@@ -26,6 +27,7 @@ export class ProjectService {
   private baseURL = environment.supabase.url;
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
   private projectEpicsURL = `${this.baseURL}/rest/v1/project_epics`;
+  private epicsURL = `${this.baseURL}/rest/v1/epics`;
 
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
@@ -88,6 +90,16 @@ export class ProjectService {
 
     return this.http
       .get<ProjectEpicResponse[]>(this.projectEpicsURL, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  createEpic(payload: EpicPayload): Observable<ProjectEpicResponse[]> {
+    const headers = new HttpHeaders({
+      Prefer: 'return=representation',
+    });
+
+    return this.http
+      .post<ProjectEpicResponse[]>(this.epicsURL, payload, { headers })
       .pipe(catchError(this.handleError.bind(this)));
   }
 

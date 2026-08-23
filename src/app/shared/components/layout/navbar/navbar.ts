@@ -46,10 +46,9 @@ export class Navbar implements OnInit {
           this.jobTitle.set(jobTitle);
           this.avatarText.set(avatarText);
         },
-        error: (err) => {
-          console.error('Failed to load user profile', err);
+        error: () => {
           // Replace the user profile name and avatar if the network request fails
-          this.userName.set('Failed to get user profile');
+          this.userName.set('N/A');
           this.avatarText.set('??');
         },
       });
