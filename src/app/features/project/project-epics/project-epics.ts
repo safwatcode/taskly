@@ -11,11 +11,12 @@ import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DatePipe, NgClass } from '@angular/common';
 import { UserProfileResponse } from '../../../core/auth/models/user-profile.model';
 import { Pagination } from '../../../shared/components/pagination/pagination';
+import { EpicDetailsPopup } from './epic-details-popup/epic-details-popup';
 
 @Component({
   selector: 'app-project-epics',
   standalone: true,
-  imports: [DatePipe, NgClass, RouterLink, FormsModule, Pagination],
+  imports: [DatePipe, NgClass, RouterLink, FormsModule, Pagination, EpicDetailsPopup],
   templateUrl: './project-epics.html',
   styleUrl: './project-epics.css',
   host: {
@@ -34,6 +35,7 @@ export class ProjectEpics implements OnInit {
   projectId = '';
   projectName = '';
   epics: ProjectEpicResponse[] = [];
+  selectedEpicId: string | null = null;
 
   activeUserName: string | null = null;
   activeUserEmail: string | null = null;
@@ -174,6 +176,15 @@ export class ProjectEpics implements OnInit {
     this.currentPage = page;
     // Fetch the new page data
     this.fetchEpicsOnly();
+  }
+
+  // Epic popup
+  openEpicDetails(id: string): void {
+    this.selectedEpicId = id;
+  }
+
+  closeEpicDetails(): void {
+    this.selectedEpicId = null;
   }
 
   retryConnection(): void {

@@ -131,6 +131,26 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  // Epic details popup
+  getEpicDetails(projectId: string, epicId: string): Observable<ProjectEpicResponse> {
+    const params = new HttpParams().set('project_id', `eq.${projectId}`).set('id', `eq.${epicId}`);
+
+    const headers = new HttpHeaders({
+      Prefer: 'return=representation',
+    });
+
+    return this.http.get<ProjectEpicResponse[]>(this.projectEpicsURL, { params, headers }).pipe(
+      map((epics) => {
+        if (!epics || epics.length === 0) {
+          throw new Error('Epic not found');
+        }
+        // API response is an array, use the first item
+        return epics[0];
+      }),
+      catchError(this.handleError.bind(this)),
+    );
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 

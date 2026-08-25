@@ -219,6 +219,7 @@
         @for (epic of epics; track epic.id) {
           <!-- Epic Card-->
           <div
+            (click)="openEpicDetails(epic.id)"
             class="bg-white rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col relative overflow-hidden hover:shadow-md hover:border-slate-200 transition-all cursor-pointer group">
 
             <!-- Green Status Border Accent -->
@@ -321,4 +322,12 @@
     </button>
   }
 
+  <!-- Epic Details Popup -->
+  @if (selectedEpicId) {
+    <app-epic-details-popup
+      [epicId]="selectedEpicId"
+      [projectId]="projectId"
+      (closeDialog)="closeEpicDetails()">
+    </app-epic-details-popup>
+  }
 </div>

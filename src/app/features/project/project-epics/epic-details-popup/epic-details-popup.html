@@ -1,0 +1,211 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 md:p-6"
+     (click)="onClose()">
+
+  <!-- Modal Content -->
+  <div
+    class="bg-white rounded-2xl shadow-xl w-full max-w-162.5 max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up"
+    (click)="$event.stopPropagation()">
+
+    @if (isLoading) {
+      <div class="flex flex-col items-center justify-center p-12 h-64">
+        <div class="w-10 h-10 border-4 border-slate-200 border-t-[#003D9B] rounded-full animate-spin"></div>
+        <p class="mt-4 text-slate-500 font-medium">Loading epic details...</p>
+      </div>
+    } @else if (errorMessage || !epic) {
+      <div class="flex flex-col items-center justify-center p-12 text-center h-64">
+        <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-[#041B3C]">{{ errorMessage || 'Epic not found' }}</h3>
+        <button (click)="onClose()" class="mt-4 text-[#003D9B] font-medium hover:underline">Close</button>
+      </div>
+    } @else {
+
+      <!-- Top Header Bar -->
+      <div class="flex items-center justify-between px-5 md:px-6 py-4 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2">
+          <svg class="text-[#0052CC]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+          <span class="text-[#0052CC] font-bold text-[11px] tracking-widest uppercase">{{ epic.epic_id }}</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button (click)="copyLink()"
+                  class="flex items-center gap-1.5 text-slate-500 cursor-pointer hover:text-[#041B3C] transition-colors text-sm font-medium">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Copy link
+          </button>
+          <button (click)="onClose()" class="text-slate-400 hover:text-slate-700 transition-colors p-1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- Scrollable Body -->
+      <div class="flex-1 overflow-y-auto p-5 md:p-6 pb-8">
+
+        <!-- Title -->
+        <div class=" border border-slate-200 rounded-lg p-3.5 mb-6">
+          <h2 class="text-lg md:text-xl font-bold text-[#041B3C]">{{ epic.title }}</h2>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <!--          <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">Description</span>-->
+          <div
+            class="bg-white border border-slate-200 rounded-lg p-3.5 min-h-25 text-[15px] text-slate-700 leading-relaxed">
+            @if (epic.description) {
+              {{ epic.description }}
+            } @else {
+              <span class="text-slate-400 italic">No description provided</span>
+            }
+          </div>
+        </div>
+
+        <!-- Information Grid  -->
+        <div class="grid grid-cols-2 items-center md:grid-cols-3 gap-y-6 gap-x-4 mb-8">
+
+          <!-- Created By -->
+          <div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">Created By</span>
+            <div class="flex items-center gap-2">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold border border-white/50"
+                [ngClass]="getAvatarColorClass(epic.created_by?.name)">
+                {{ getInitials(epic.created_by?.name) }}
+              </div>
+              <span
+                class="text-[15px] font-medium text-[#041B3C] truncate">{{ epic.created_by?.name || 'System' }}</span>
+            </div>
+          </div>
+
+          <!-- Assignee -->
+          <div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">Assignee</span>
+            <div
+              class="flex items-center justify-between border border-slate-200 rounded-lg p-1.5 px-2 bg-white shadow-sm cursor-not-allowed">
+              <div class="flex items-center gap-2 truncate">
+                <div
+                  class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold bg-slate-100 text-slate-500 shrink-0"
+                  [ngClass]="epic.assignee ? getAvatarColorClass(epic.assignee.name) : ''">
+                  @if (epic.assignee) {
+                    {{ getInitials(epic.assignee.name) }}
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                      <line x1="4" y1="4" x2="20" y2="20"></line>
+                    </svg>
+                  }
+                </div>
+                <span class="text-[14px] font-medium truncate"
+                      [ngClass]="epic.assignee ? 'text-[#041B3C]' : 'text-slate-500'">
+                  {{ epic.assignee?.name || 'Unassigned' }}
+                </span>
+              </div>
+              <svg class="text-slate-400 shrink-0 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">Deadline</span>
+            <div
+              class="flex items-center justify-between border border-slate-200 rounded-lg p-2 bg-white shadow-sm cursor-not-allowed text-slate-700">
+              <div class="flex items-center gap-2 text-[14px] font-medium">
+                <svg class="text-[#0052CC]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                {{ epic.deadline | date:'MMM dd, yyyy' }}
+              </div>
+              <svg class="text-slate-400 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Created At -->
+          <div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-2">Created At</span>
+            <div class="flex items-center gap-2 text-[15px] font-medium text-[#041B3C]">
+              <svg class="text-[#0052CC]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              {{ epic.created_at | date:'MMM dd, yyyy' }}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Tasks Section -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-[#041B3C] flex items-center gap-2">
+              Tasks
+              <span
+                class="md:hidden bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">0 Tasks</span>
+            </h3>
+            <button class="hidden md:flex text-[#0052CC] font-bold text-sm items-center gap-1 cursor-pointer">
+              + Add Task
+            </button>
+          </div>
+
+          <div
+            class="border-2 border-dashed border-slate-200 bg-[#F8FAFC] rounded-xl p-8 flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 bg-[#E8EDF9] text-[#0052CC] rounded-xl flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </div>
+            <p class="text-[15px] font-medium text-[#041B3C] mb-4">No tasks have been added to this epic yet</p>
+            <button
+              class="bg-[#0052CC] hover:bg-blue-800 text-white cursor-pointer font-medium py-2.5 px-6 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Task
+            </button>
+          </div>
+        </div>
+
+      </div>
+    }
+  </div>
+</div>
