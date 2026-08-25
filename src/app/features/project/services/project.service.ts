@@ -85,12 +85,40 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  getProjectEpics(projectId: string): Observable<ProjectEpicResponse[]> {
-    const params = new HttpParams().set('project_id', `eq.${projectId}`);
+  getProjectEpics(
+    projectId: string,
+    searchTerm = '',
+    limit = 6,
+    offset = 0,
+  ): Observable<PaginatedResponse<ProjectEpicResponse>> {
+    let params = new HttpParams()
+      .set('project_id', `eq.${projectId}`)
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
+
+    // Apply case-insensitive wildcard search if term exists
+    if (searchTerm && searchTerm.trim() !== '') {
+      params = params.set('title', `ilike.%${searchTerm.trim()}%`);
+    }
 
     return this.http
-      .get<ProjectEpicResponse[]>(this.projectEpicsURL, { params })
-      .pipe(catchError(this.handleError.bind(this)));
+      .get<ProjectEpicResponse[]>(this.projectEpicsURL, {
+        params,
+        headers: { Prefer: 'count=exact' }, // Required to get total count
+        observe: 'response', // Required to access the Content-Range header
+      })
+      .pipe(
+        map((response: HttpResponse<ProjectEpicResponse[]>) => {
+          const contentRange = response.headers.get('Content-Range') || '0/0';
+          const totalCount = parseInt(contentRange.split('/')[1], 10) || 0;
+
+          return {
+            content: response.body || [],
+            totalElements: totalCount,
+          };
+        }),
+        catchError(this.handleError.bind(this)),
+      );
   }
 
   createEpic(payload: EpicPayload): Observable<ProjectEpicResponse[]> {

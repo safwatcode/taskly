@@ -20,16 +20,26 @@ export class Pagination {
   visiblePages = computed(() => {
     const current = this.currentPage();
     const total = this.totalPages();
-    const maxVisible = 3;
 
-    let start = Math.max(current - 1, 1);
-    const end = Math.min(start + maxVisible - 1, total);
-
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(end - maxVisible + 1, 1);
+    // If 5 or fewer pages, show them all: [1] [2] [3] [4] [5]
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
     }
 
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    // If near the start: [1] [2] [3] [4] [...] [15]
+    if (current <= 3) {
+      return [1, 2, 3, 4, '...', total];
+    }
+
+    // If near the end: [1] [...] [12] [13] [14] [15]
+    else if (current >= total - 2) {
+      return [1, '...', total - 3, total - 2, total - 1, total];
+    }
+
+    // If in the middle: [1] [...] [6] [7] [8] [...] [15]
+    else {
+      return [1, '...', current - 1, current, current + 1, '...', total];
+    }
   });
 
   // Calculates the starting number

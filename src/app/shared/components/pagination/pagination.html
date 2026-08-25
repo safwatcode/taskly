@@ -19,19 +19,24 @@
     </button>
 
 
-    @for (page of visiblePages(); track page) {
-      <button
-        (click)="goToPage(page)"
-        [class.bg-primary]="currentPage() === page"
-        [class.text-white]="currentPage() === page"
-        [class.border]="currentPage() !== page"
-        [class.border-slate-200]="currentPage() !== page"
-        [class.text-slate-600]="currentPage() !== page"
-        class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-800 hover:text-white font-medium cursor-pointer transition duration-300">
-        {{ page }}
-      </button>
+    @for (page of visiblePages(); track $index) {
+      @if (page === '...') {
+        <div class="w-8 h-8 flex items-center justify-center text-slate-400 font-bold tracking-widest">
+          ...
+        </div>
+      } @else {
+        <button
+          (click)="goToPage($any(page))"
+          [class.bg-[#003D9B]]="currentPage() === page"
+          [class.text-white]="currentPage() === page"
+          [class.border]="currentPage() !== page"
+          [class.border-slate-200]="currentPage() !== page"
+          [class.text-slate-600]="currentPage() !== page"
+          class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-800 hover:text-white font-medium cursor-pointer transition duration-300">
+          {{ page }}
+        </button>
+      }
     }
-
     <button
       (click)="nextPage()"
       [disabled]="currentPage() === totalPages()"
