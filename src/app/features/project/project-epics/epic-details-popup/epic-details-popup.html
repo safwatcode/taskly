@@ -211,6 +211,14 @@
                       </svg>
                     </div>
                     <span class="text-[14px] font-medium text-slate-700 group-hover:text-white transition-colors">Unassigned</span>
+                    <!-- Checkmark for Unassigned -->
+                    @if (draftAssigneeId === '') {
+                      <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-auto" width="16" height="16"
+                           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                           stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    }
                   </div>
 
                   <!-- Divider -->
@@ -232,8 +240,8 @@
                       <!-- Name -->
                       <span
                         class="text-[14px] font-medium text-[#041B3C] group-hover:text-white transition-colors truncate w-full">
-              {{ member.name || 'Unknown User' }}
-            </span>
+                        {{ member.name || 'Unknown User' }}
+                      </span>
 
                       <!-- Checkmark on the far right for the currently selected assignee  -->
                       @if ((($any(member).user_id || $any(member).sub || member.id) === draftAssigneeId)) {

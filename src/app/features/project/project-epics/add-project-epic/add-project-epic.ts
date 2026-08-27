@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common'; // Includes NgClass and DatePipe
 import {
   AbstractControl,
   FormBuilder,
@@ -50,6 +50,30 @@ export class AddProjectEpic implements OnInit {
   loadError: string | null = null;
   submitError: string | null = null;
 
+  // Controls the custom assignee dropdown
+  isAssigneeDropdownOpen = false;
+
+  // Dynamically block past dates in the date picker
+  get minDate(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Getter to display the selected assignee's name and avatar in the UI
+  get selectedAssignee(): ProjectMemberResponse | undefined {
+    const selectedId = this.epicForm.get('assignee_id')?.value;
+    if (!selectedId) return undefined;
+
+    return this.members.find((m: any) => (m.user_id || m.sub || m.id) === selectedId);
+  }
+
+  get controls() {
+    return this.epicForm.controls;
+  }
+
   ngOnInit(): void {
     this.initForm();
     this.addProjectEpics();
@@ -75,7 +99,7 @@ export class AddProjectEpic implements OnInit {
   }
 
   private initForm(): void {
-    // Generate today's date in YYYY-MM-DD format for the default deadline
+    // Generate today's date format as the default deadline
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -104,7 +128,7 @@ export class AddProjectEpic implements OnInit {
         next: (data) => {
           this.projectName = data.project.name;
 
-          // 1. Extract the logged-in user's name and email from the Auth token
+          // Extract the logged-in user's name and email from the Auth token
           let activeUserName: string | null = null;
           let activeUserEmail: string | null = null;
 
@@ -114,7 +138,7 @@ export class AddProjectEpic implements OnInit {
             activeUserEmail = res.email || res.user_metadata?.email || null;
           }
 
-          // 2. Inject Auth name if DB name is missing for the active user
+          // Inject Auth name if DB name is missing for the active user
           this.members = data.members.map((member) => {
             if (
               member.email === activeUserEmail &&
@@ -158,8 +182,10 @@ export class AddProjectEpic implements OnInit {
     return null;
   }
 
-  get controls() {
-    return this.epicForm.controls;
+  // Handles selection from the custom dropdown menu
+  selectAssignee(id: string | null): void {
+    this.epicForm.patchValue({ assignee_id: id });
+    this.isAssigneeDropdownOpen = false;
   }
 
   onSubmit(): void {
@@ -211,5 +237,31 @@ export class AddProjectEpic implements OnInit {
           this.submitError = 'Failed to create epic. Please try again later.';
         },
       });
+  }
+
+  // UI Helpers
+  getInitials(name: string | null | undefined): string {
+    if (!name || !name.trim()) return 'N/A';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  getAvatarColorClass(name: string | null | undefined): string {
+    if (!name || !name.trim()) return 'bg-slate-100 text-slate-500';
+    const colors = [
+      'bg-blue-100 text-[#041B3C]',
+      'bg-emerald-100 text-[#041B3C]',
+      'bg-indigo-100 text-[#041B3C]',
+      'bg-[#65DCA4] text-[#041B3C]',
+      'bg-orange-100 text-[#041B3C]',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   }
 }
