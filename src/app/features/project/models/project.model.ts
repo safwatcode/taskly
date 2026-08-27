@@ -30,7 +30,7 @@ export interface ProjectMemberResponse {
 // Project Epics
 export interface EpicUserSummary {
   sub: string;
-  name: string;
+  name: string | undefined;
   email: string;
   department?: string;
 }

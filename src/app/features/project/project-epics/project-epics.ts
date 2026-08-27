@@ -112,11 +112,14 @@ export class ProjectEpics implements OnInit {
   }
 
   // Fetch Epics (Fires on load, on search, and on page change)
-  protected fetchEpicsOnly(): void {
+  protected fetchEpicsOnly(silent = false): void {
     this.errorMessage = null;
 
-    // Show skeleton while fetching the new page
-    this.isLoading = true;
+    if (!silent) {
+      // Only show skeleton if not a silent refresh
+      this.isLoading = true;
+      this.cdr.detectChanges();
+    }
 
     this.cdr.detectChanges();
 

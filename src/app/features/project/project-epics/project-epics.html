@@ -327,7 +327,9 @@
     <app-epic-details-popup
       [epicId]="selectedEpicId"
       [projectId]="projectId"
-      (closeDialog)="closeEpicDetails()">
+      (closeDialog)="closeEpicDetails()"
+      (epicUpdated)="fetchEpicsOnly(true)"
+    >
     </app-epic-details-popup>
   }
 </div>

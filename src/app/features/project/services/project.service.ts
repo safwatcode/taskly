@@ -94,7 +94,8 @@ export class ProjectService {
     let params = new HttpParams()
       .set('project_id', `eq.${projectId}`)
       .set('limit', limit.toString())
-      .set('offset', offset.toString());
+      .set('offset', offset.toString())
+      .set('order', 'created_at.asc');
 
     // Apply case-insensitive wildcard search if term exists
     if (searchTerm && searchTerm.trim() !== '') {
@@ -151,6 +152,12 @@ export class ProjectService {
     );
   }
 
+  updateEpic(epicId: string, payload: Partial<EpicPayload>): Observable<void> {
+    return this.http
+      .patch<void>(`${this.epicsURL}?id=eq.${epicId}`, payload)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 
@@ -160,7 +167,7 @@ export class ProjectService {
       if (error.error && error.error.message) {
         errorMessage = error.error.message;
       } else {
-        errorMessage = `Server Error (${error.status}): ${error.statusText}`;
+        errorMessage = `Server Error (${error.status}): ${error.message}`;
       }
     }
 
