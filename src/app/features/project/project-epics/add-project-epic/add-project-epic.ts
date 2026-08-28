@@ -209,7 +209,7 @@ export class AddProjectEpic implements OnInit {
       payload.description = formValues.description.trim();
     }
 
-    // STRICT CHECK: Ensure it's not empty AND not the literal string "undefined"
+    // Ensure it's not empty AND not the literal string "undefined"
     if (formValues.assignee_id && formValues.assignee_id !== 'undefined') {
       payload.assignee_id = formValues.assignee_id;
     }

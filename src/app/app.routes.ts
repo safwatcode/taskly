@@ -58,6 +58,25 @@ export const routes: Routes = [
               },
             ],
           },
+          {
+            path: ':projectId/tasks',
+            children: [
+              {
+                path: '',
+                loadComponent: () =>
+                  import('./features/project/project-tasks/project-tasks').then(
+                    (m) => m.ProjectTasks,
+                  ),
+              },
+              {
+                path: 'new',
+                loadComponent: () =>
+                  import('./features/project/project-tasks/add-project-tasks/add-project-tasks').then(
+                    (m) => m.AddProjectTasks,
+                  ),
+              },
+            ],
+          },
         ],
       },
       { path: '', redirectTo: 'project', pathMatch: 'full' },

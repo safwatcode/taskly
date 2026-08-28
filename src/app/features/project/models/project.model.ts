@@ -54,3 +54,14 @@ export interface EpicPayload {
   project_id: string;
   deadline?: string;
 }
+
+// Add Project Task
+export interface TaskPayload {
+  project_id: string;
+  title: string;
+  status: string;
+  epic_id?: string;
+  description?: string;
+  assignee_id?: string;
+  due_date?: string;
+}

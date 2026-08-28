@@ -15,6 +15,7 @@ import {
   ProjectMemberResponse,
   ProjectPayload,
   ProjectResponse,
+  TaskPayload,
 } from '../models/project.model';
 import { environment } from '../../../../environments/environment';
 
@@ -28,6 +29,7 @@ export class ProjectService {
   private projectsURL = `${this.baseURL}/rest/v1/projects`;
   private projectEpicsURL = `${this.baseURL}/rest/v1/project_epics`;
   private epicsURL = `${this.baseURL}/rest/v1/epics`;
+  private tasksURL = `${this.baseURL}/rest/v1/tasks`;
 
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
@@ -155,6 +157,16 @@ export class ProjectService {
   updateEpic(epicId: string, payload: Partial<EpicPayload>): Observable<void> {
     return this.http
       .patch<void>(`${this.epicsURL}?id=eq.${epicId}`, payload)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  createTask(payload: TaskPayload): Observable<any> {
+    const headers = new HttpHeaders({
+      Prefer: 'return=representation',
+    });
+
+    return this.http
+      .post<any>(this.tasksURL, payload, { headers })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
