@@ -15,6 +15,7 @@ import {
   ProjectMemberResponse,
   ProjectPayload,
   ProjectResponse,
+  ProjectTaskResponse,
   TaskPayload,
 } from '../models/project.model';
 import { environment } from '../../../../environments/environment';
@@ -155,10 +156,10 @@ export class ProjectService {
     );
   }
 
-  getEpicTasks(epicId: string): Observable<any[]> {
+  getEpicTasks(epicId: string): Observable<ProjectTaskResponse[]> {
     const params = new HttpParams().set('epic_id', `eq.${epicId}`);
     return this.http
-      .get<any[]>(this.projectTasksURL, { params })
+      .get<ProjectTaskResponse[]>(this.projectTasksURL, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
@@ -168,13 +169,24 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  createTask(payload: TaskPayload): Observable<any> {
+  createTask(payload: TaskPayload): Observable<ProjectTaskResponse[]> {
     const headers = new HttpHeaders({
       Prefer: 'return=representation',
     });
 
     return this.http
-      .post<any>(this.tasksURL, payload, { headers })
+      .post<ProjectTaskResponse[]>(this.tasksURL, payload, { headers })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getProjectTasksByStatus(projectId: string, status: string): Observable<ProjectTaskResponse[]> {
+    const params = new HttpParams()
+      .set('project_id', `eq.${projectId}`)
+      .set('status', `eq.${status}`)
+      .set('order', 'created_at.desc');
+
+    return this.http
+      .get<ProjectTaskResponse[]>(this.projectTasksURL, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
 

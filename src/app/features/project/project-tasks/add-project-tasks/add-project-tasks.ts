@@ -123,6 +123,8 @@ export class AddProjectTasks implements OnInit {
       if (prefillEpicId) {
         this.taskForm.patchValue({ epic_id: prefillEpicId });
       }
+      const prefillStatus = this.route.snapshot.queryParamMap.get('status');
+      if (prefillStatus) this.taskForm.patchValue({ status: prefillStatus });
 
       this.fetchData();
     });

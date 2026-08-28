@@ -65,3 +65,32 @@ export interface TaskPayload {
   assignee_id?: string;
   due_date?: string;
 }
+
+export interface ProjectTaskResponse {
+  id: string;
+  project_id: string;
+  epic_id?: string;
+  title: string;
+  description?: string;
+  status: string;
+  due_date?: string;
+  created_at: string;
+  assignee?: {
+    name: string | null;
+    email: string | null;
+    sub?: string;
+    user_id?: string;
+  };
+}
+
+// Project Tasks - Board View
+export interface BoardColumn {
+  id: string;
+  label: string;
+  dotClass: string;
+  borderClass: string;
+  bgClass: string;
+  tasks: ProjectTaskResponse[];
+  isLoading: boolean;
+  error: boolean;
+}
