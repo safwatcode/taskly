@@ -1,9 +1,22 @@
 <!-- Wrapper Hidden on Mobile, Flex on Desktop to handle the list view only in mobile screens -->
-<div class="hidden md:flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden min-w-0">
+<div class="hidden md:flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden min-w-0 relative">
+
+  <!-- Toast Error Notification -->
+  @if (toastError) {
+    <div
+      class="absolute top-6 right-6 bg-[#BA1A1A] text-white px-5 py-3.5 rounded-lg shadow-lg shadow-red-900/20 z-100 animate-fade-in-up flex items-center gap-3 font-medium text-sm">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ toastError }}
+    </div>
+  }
 
   <!-- Header Section -->
   <div class="mb-6 md:mb-8 shrink-0">
-
     <!-- Breadcrumb -->
     <div class="hidden md:flex text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase items-center gap-2">
       <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">PROJECTS</a>
@@ -15,16 +28,12 @@
 
     <!-- Title & Controls Row -->
     <div class="flex items-center justify-between gap-4 mt-3">
-
-      <!-- Title and Description -->
       <div>
         <h1 class="text-[28px] font-bold text-[#041B3C] tracking-tight">Active Workboard</h1>
         <p class="text-slate-500 text-sm">Curating Project milestones and execution pipeline.</p>
       </div>
 
-      <!-- Controls (Search & View Switcher) -->
       <div class="flex items-center gap-3 shrink-0">
-
         <!-- Search Input -->
         <div class="relative w-64">
           <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16"
@@ -58,7 +67,6 @@
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
-
       </div>
     </div>
   </div>
@@ -67,12 +75,12 @@
   <div
     class="flex-1 overflow-x-auto overflow-y-hidden pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-slate-200/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
 
-    <!-- Board Columns Container -->
-    <div class="flex gap-6 h-full items-start w-max px-1 pb-2">
+    <div class="flex gap-6 h-full items-start w-max px-1 pb-2" cdkDropListGroup>
 
       @for (col of boardColumns; track col.id) {
         <!-- board Column -->
         <div class="w-[320px] flex flex-col max-h-full">
+
           <!-- Column Header -->
           <div class="flex items-center justify-between mb-4 px-1 shrink-0">
             <div class="flex items-center gap-2">
@@ -83,8 +91,6 @@
                   class="bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold px-2 py-0.5 rounded ml-1">{{ col.tasks.length }}</span>
               }
             </div>
-
-            <!-- Plus button -->
             <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
                     class="text-slate-400 hover:text-[#0052CC] hover:bg-[#E8EDF9] w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -96,11 +102,11 @@
           </div>
 
           <!-- Vertical Scrolling Task List Area -->
-          <!-- invisible-until-hover vertical scrollbar for the columns -->
-          <div
-            class="flex-1 overflow-y-auto pr-2 pb-12 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+          <div cdkDropList
+               [cdkDropListData]="col.tasks"
+               (cdkDropListDropped)="drop($event, col.id)"
+               class="flex-1 overflow-y-auto pr-2 pb-12 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full min-h-37.5">
 
-            <!-- Loading Skeletons -->
             @if (col.isLoading) {
               <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse"></div>
               <div
@@ -114,7 +120,7 @@
 
               <!--'Add Task' button inside the column -->
               <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
-                      class="w-full border-2 border-dashed border-slate-200 rounded-lg py-3 flex justify-center items-center gap-2 text-slate-400 hover:text-slate-600 hover:bg-white hover:border-slate-300 transition-all font-bold text-[11px] tracking-widest uppercase cursor-pointer mb-1 shadow-sm">
+                      class="w-full border-2 border-dashed border-slate-200 rounded-lg py-3 flex justify-center items-center gap-2 text-slate-400 hover:text-slate-600 hover:bg-white hover:border-slate-300 transition-all font-bold text-[11px] tracking-widest uppercase cursor-pointer mb-1 shadow-sm shrink-0">
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M6.75 11.25H8.25V8.25H11.25V6.75H8.25V3.75H6.75V6.75H3.75V8.25H6.75V11.25ZM7.5 15C6.4625 15 5.4875 14.8031 4.575 14.4094C3.6625 14.0156 2.86875 13.4812 2.19375 12.8062C1.51875 12.1312 0.984375 11.3375 0.590625 10.425C0.196875 9.5125 0 8.5375 0 7.5C0 6.4625 0.196875 5.4875 0.590625 4.575C0.984375 3.6625 1.51875 2.86875 2.19375 2.19375C2.86875 1.51875 3.6625 0.984375 4.575 0.590625C5.4875 0.196875 6.4625 0 7.5 0C8.5375 0 9.5125 0.196875 10.425 0.590625C11.3375 0.984375 12.1312 1.51875 12.8062 2.19375C13.4812 2.86875 14.0156 3.6625 14.4094 4.575C14.8031 5.4875 15 6.4625 15 7.5C15 8.5375 14.8031 9.5125 14.4094 10.425C14.0156 11.3375 13.4812 12.1312 12.8062 12.8062C12.1312 13.4812 11.3375 14.0156 10.425 14.4094C9.5125 14.8031 8.5375 15 7.5 15ZM7.5 13.5C9.175 13.5 10.5938 12.9188 11.7563 11.7563C12.9188 10.5938 13.5 9.175 13.5 7.5C13.5 5.825 12.9188 4.40625 11.7563 3.24375C10.5938 2.08125 9.175 1.5 7.5 1.5C5.825 1.5 4.40625 2.08125 3.24375 3.24375C2.08125 4.40625 1.5 5.825 1.5 7.5C1.5 9.175 2.08125 10.5938 3.24375 11.7563C4.40625 12.9188 5.825 13.5 7.5 13.5Z"
@@ -125,20 +131,22 @@
 
               <!-- Task Cards Loop -->
               @for (task of col.tasks; track task.id) {
-                <div
-                  class="rounded-lg border-l-4 {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col cursor-grab hover:shadow-md transition-shadow relative group">
+
+                <div cdkDrag
+                     class="rounded-lg border-l-4 {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing">
+
+                  <div *cdkDragPlaceholder
+                       class="opacity-30 border-2 bg-slate-50 border-dashed border-slate-300 rounded-lg  min-h-25"></div>
 
                   <h4 class="font-bold text-[#041B3C] text-[14px] leading-snug mb-5">{{ task.title }}</h4>
 
                   <div class="flex items-end justify-between mt-auto">
 
-                    <!-- Due Date UI Formatting -->
+                    <!-- Due Date -->
                     @if (task.due_date) {
-
                       @if (getTaskDateState(task.due_date) === 'DELAYED') {
-                        <!-- Delayed State -->
                         <div
-                          class="flex items-center gap-1.5 text-[#BA1A1A] font-bold text-[10px] tracking-widest uppercase bg-white/50 px-1.5 py-0.5 rounded">
+                          class="flex items-center gap-1.5 text-[#BA1A1A] font-bold text-[10px] tracking-widest uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path
@@ -149,7 +157,6 @@
                           DELAYED
                         </div>
                       } @else if (getTaskDateState(task.due_date) === 'TODAY') {
-                        <!-- Today State -->
                         <div
                           class="flex items-center gap-1.5 text-[#0052CC] font-bold text-[10px] tracking-widest uppercase">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -162,7 +169,6 @@
                           TODAY
                         </div>
                       } @else {
-                        <!-- Normal Date -->
                         <div
                           class="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] tracking-widest uppercase">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -175,9 +181,7 @@
                           {{ task.due_date | date:'MMM dd' }}
                         </div>
                       }
-
                     } @else {
-                      <!-- Empty spacer to keep avatar on right -->
                       <div></div>
                     }
 

@@ -12,8 +12,9 @@
     "format": "prettier --write \"src/**/*.{ts,html,css,scss,json}\""
   },
   "private": true,
-  "packageManager": "pnpm@11.13.1",
+  "packageManager": "pnpm@11.24.0",
   "dependencies": {
+    "@angular/cdk": "^21.2.14",
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
     "@angular/core": "^21.2.0",

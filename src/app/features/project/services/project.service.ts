@@ -179,6 +179,12 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  updateTask(taskId: string, payload: Partial<TaskPayload>): Observable<void> {
+    return this.http
+      .patch<void>(`${this.tasksURL}?id=eq.${taskId}`, payload)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   getProjectTasksByStatus(projectId: string, status: string): Observable<ProjectTaskResponse[]> {
     const params = new HttpParams()
       .set('project_id', `eq.${projectId}`)

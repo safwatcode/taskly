@@ -2,13 +2,30 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angul
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProjectService } from '../services/project.service';
 import { ProjectContextService } from '../services/project-context.service';
-import { BoardColumn } from '../models/project.model';
+import { BoardColumn, ProjectTaskResponse } from '../models/project.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, NgClass } from '@angular/common';
+import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDragPlaceholder,
+  CdkDropList,
+  CdkDropListGroup,
+  moveItemInArray,
+  transferArrayItem,
+} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-project-tasks',
-  imports: [RouterLink, NgClass, DatePipe],
+  imports: [
+    RouterLink,
+    NgClass,
+    DatePipe,
+    CdkDropListGroup,
+    CdkDropList,
+    CdkDrag,
+    CdkDragPlaceholder,
+  ],
   templateUrl: './project-tasks.html',
   styleUrl: './project-tasks.css',
   host: { class: 'flex flex-col flex-1 h-full overflow-hidden bg-slate-50' },
@@ -23,7 +40,10 @@ export class ProjectTasks implements OnInit {
   projectId = '';
   projectName = '';
 
-  // Defined the columns
+  // Toast State for Drag & Drop Errors
+  toastError: string | null = null;
+  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
   boardColumns: BoardColumn[] = [
     {
       id: 'TO_DO',
@@ -50,7 +70,7 @@ export class ProjectTasks implements OnInit {
       label: 'BLOCKED',
       dotClass: 'bg-[#BA1A1A]',
       borderClass: 'border-none',
-      bgClass: 'bg-[#FFDAD633]',
+      bgClass: 'bg-[#FFF4F4]',
       tasks: [],
       isLoading: true,
       error: false,
@@ -132,7 +152,6 @@ export class ProjectTasks implements OnInit {
       });
   }
 
-  // Each column should independently fetch its related tasks
   private loadAllColumnsIndependently(): void {
     this.boardColumns.forEach((column) => {
       column.isLoading = true;
@@ -156,22 +175,68 @@ export class ProjectTasks implements OnInit {
     });
   }
 
-  // Date Formatting (TODAY, DELAYED, or Normal)
+  // Handle Drag and Drop
+  drop(event: CdkDragDrop<ProjectTaskResponse[]>, newStatus: string): void {
+    // If dropped in the same column, just reorder the array visually
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      // If dropped in a different column
+      const taskToMove = event.previousContainer.data[event.previousIndex];
+      const previousStatus = taskToMove.status;
+
+      // Optimistic UI Update: Move it instantly
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex,
+      );
+      taskToMove.status = newStatus;
+
+      // API Call to persist the change
+      this.projectService.updateTask(taskToMove.id, { status: newStatus }).subscribe({
+        next: () => {
+          // Success! The UI is already updated.
+        },
+        error: () => {
+          // Rollback UI if API fails
+          transferArrayItem(
+            event.container.data,
+            event.previousContainer.data,
+            event.currentIndex,
+            event.previousIndex,
+          );
+          taskToMove.status = previousStatus;
+          this.showToast('Failed to move task. Please check your connection.');
+          this.cdr.detectChanges();
+        },
+      });
+    }
+  }
+
+  // Toast Helper
+  private showToast(message: string): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastError = message;
+    this.cdr.detectChanges();
+    this.toastTimeout = setTimeout(() => {
+      this.toastError = null;
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
   getTaskDateState(dateString: string | null | undefined): 'TODAY' | 'DELAYED' | 'NORMAL' {
     if (!dateString) return 'NORMAL';
-
     const due = new Date(dateString);
     due.setHours(0, 0, 0, 0);
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     if (due.getTime() < today.getTime()) return 'DELAYED';
     if (due.getTime() === today.getTime()) return 'TODAY';
     return 'NORMAL';
   }
 
-  // UI Helpers
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';
     const parts = name.trim().split(/\s+/);
