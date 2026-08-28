@@ -30,6 +30,7 @@ export class ProjectService {
   private projectEpicsURL = `${this.baseURL}/rest/v1/project_epics`;
   private epicsURL = `${this.baseURL}/rest/v1/epics`;
   private tasksURL = `${this.baseURL}/rest/v1/tasks`;
+  private projectTasksURL = `${this.baseURL}/rest/v1/project_tasks`;
 
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
@@ -152,6 +153,13 @@ export class ProjectService {
       }),
       catchError(this.handleError.bind(this)),
     );
+  }
+
+  getEpicTasks(epicId: string): Observable<any[]> {
+    const params = new HttpParams().set('epic_id', `eq.${epicId}`);
+    return this.http
+      .get<any[]>(this.projectTasksURL, { params })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   updateEpic(epicId: string, payload: Partial<EpicPayload>): Observable<void> {

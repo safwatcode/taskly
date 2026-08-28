@@ -18,6 +18,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserProfileResponse } from '../../../../core/auth/models/user-profile.model';
 import { DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-epic-details-popup',
@@ -35,6 +36,7 @@ export class EpicDetailsPopup implements OnInit {
 
   private projectService = inject(ProjectService);
   private authService = inject(Auth);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private cdr = inject(ChangeDetectorRef);
 
@@ -42,6 +44,11 @@ export class EpicDetailsPopup implements OnInit {
   members: ProjectMemberResponse[] = [];
   isLoading = true;
   errorMessage: string | null = null;
+
+  // Tasks State
+  tasks: any[] = [];
+  isTasksLoading = true;
+  tasksError: string | null = null;
 
   // Edit States
   isEditingTitle = false;
@@ -58,7 +65,6 @@ export class EpicDetailsPopup implements OnInit {
   toastError: string | null = null;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // Dynamically block past dates in the date picker
   get minDate(): string {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -69,6 +75,7 @@ export class EpicDetailsPopup implements OnInit {
 
   ngOnInit(): void {
     this.fetchEpicDetails();
+    this.fetchEpicTasks();
   }
 
   private fetchEpicDetails(): void {
@@ -122,7 +129,6 @@ export class EpicDetailsPopup implements OnInit {
           }
 
           this.epic = fetchedEpic;
-
           this.draftTitle = this.epic.title;
           this.draftDescription = this.epic.description || '';
           this.draftAssigneeId = this.epic.assignee?.sub || '';
@@ -139,6 +145,48 @@ export class EpicDetailsPopup implements OnInit {
       });
   }
 
+  private fetchEpicTasks(): void {
+    this.isTasksLoading = true;
+    this.tasksError = null;
+
+    this.projectService
+      .getEpicTasks(this.epicId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (tasks) => {
+          this.tasks = tasks || [];
+          this.isTasksLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          // Error state message
+          this.tasksError = 'Failed to load tasks';
+          this.isTasksLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  // Navigate to Add Task route
+  navigateToAddTask(): void {
+    // Close the popup first
+    this.closeDialog.emit();
+
+    this.router.navigate(['/project', this.projectId, 'tasks', 'new'], {
+      queryParams: { epicId: this.epicId },
+    });
+  }
+
+  // Check if task is overdue
+  isOverdue(dateString: string | null): boolean {
+    if (!dateString) return false;
+    const dueDate = new Date(dateString);
+    dueDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  }
+
   enableEdit(field: 'title' | 'description'): void {
     if (field === 'title') {
       this.isEditingTitle = true;
@@ -149,19 +197,15 @@ export class EpicDetailsPopup implements OnInit {
     }
 
     this.cdr.detectChanges();
-
     setTimeout(() => {
       document.getElementById(`${field}Input`)?.focus();
     }, 0);
   }
 
   private showToast(message = 'Failed to update epic. Please try again.'): void {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
     this.toastError = message;
     this.cdr.detectChanges();
-
     this.toastTimeout = setTimeout(() => {
       this.toastError = null;
       this.cdr.detectChanges();
@@ -222,22 +266,15 @@ export class EpicDetailsPopup implements OnInit {
   }
 
   selectAssignee(memberId: string | null): void {
-    // Close the dropdown after assignee selection
     this.isAssigneeDropdownOpen = false;
-
-    // Update the draft ID
     this.draftAssigneeId = memberId || '';
-
     if (!this.epic) return;
 
     const previousValue = this.epic.assignee;
-
-    // Find the member using the fallback logic
     const selectedMember = this.members.find(
       (m) => ((m as any).user_id || (m as any).sub || m.id) === this.draftAssigneeId,
     );
 
-    // UI Optimistic Update after select the assignee from the dropdown menu
     if (selectedMember) {
       this.epic.assignee = {
         sub: this.draftAssigneeId,
@@ -270,16 +307,10 @@ export class EpicDetailsPopup implements OnInit {
     const newDeadline = this.draftDeadline;
     if (newDeadline === (this.epic.deadline || '')) return;
 
-    // Validate that the manually typed date is not in the past
-    // We check if newDeadline exists so users can still clear the date
-
     if (newDeadline && newDeadline < this.minDate) {
-      // Revert the input field
       this.draftDeadline = this.epic.deadline || '';
       this.showToast('Deadline cannot be set in the past.');
-
       this.cdr.detectChanges();
-      // Abort the save operation
       return;
     }
 
@@ -296,7 +327,7 @@ export class EpicDetailsPopup implements OnInit {
         error: () => {
           this.epic!.deadline = previousValue;
           this.draftDeadline = previousValue || '';
-          this.showToast(); // Uses default 'Failed to update' message
+          this.showToast();
           this.cdr.detectChanges();
         },
       });
@@ -313,7 +344,6 @@ export class EpicDetailsPopup implements OnInit {
     });
   }
 
-  // UI Helpers
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';
     const parts = name.trim().split(/\s+/);
