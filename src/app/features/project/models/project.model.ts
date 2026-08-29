@@ -75,6 +75,7 @@ export interface ProjectTaskResponse {
   status: string;
   due_date?: string;
   created_at: string;
+  task_id: string;
   assignee?: {
     name: string | null;
     email: string | null;
