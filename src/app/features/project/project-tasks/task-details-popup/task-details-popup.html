@@ -5,7 +5,7 @@
 
   <!-- Modal Container -->
   <div
-    class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl w-full md:max-w-4xl max-h-[90vh] md:h-150 flex flex-col md:flex-row overflow-hidden animate-fade-in-up"
+    class="bg-white  rounded-md shadow-2xl w-full md:max-w-4xl max-h-[90vh] md:h-150 flex flex-col md:flex-row overflow-hidden animate-fade-in-up"
     (click)="$event.stopPropagation()">
 
     <!-- Loading State -->
@@ -26,19 +26,19 @@
           </svg>
         </div>
         <h3 class="text-lg font-bold text-[#041B3C]">{{ errorMessage }}</h3>
-        <button (click)="onClose()" class="mt-4 text-[#003D9B] font-medium hover:underline">Close</button>
+        <button (click)="onClose()" class="mt-4 text-[#003D9B] font-medium cursor-pointer">Close</button>
       </div>
     } @else {
       <!-- Mobile Layout -->
       <div class="md:hidden flex-1 flex flex-col overflow-y-auto p-5 pb-8">
 
-        <!-- Drag Handle Indicator -->
+        <!-- Drag Handle Indicator (bar) -->
         <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5"></div>
 
         <!-- Mobile Header -->
         <div class="flex items-center justify-between mb-4">
         <span
-          class="text-[#0052CC] font-bold text-[12px] tracking-widest uppercase">TASK-{{ task.id.substring(0, 4) }}</span>
+          class="text-[#4F5F7B]  font-bold text-[12px] tracking-widest uppercase"> {{ task.task_id }} </span>
           <button (click)="onClose()" class="text-slate-400 hover:text-slate-700 p-1">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -54,7 +54,7 @@
         <!-- Mobile Badges -->
         <div class="flex flex-wrap items-center gap-2 mb-6">
           <div
-            class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest {{ getStatusConfig(task.status).bg }} {{ getStatusConfig(task.status).text }}">
+            class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest {{ getStatusConfig(task.status).bg }} {{ getStatusConfig(task.status).text }}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
                  stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
@@ -65,14 +65,18 @@
           <!-- Epic Relation -->
           @if (task.epic_id) {
             <div
-              class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold uppercase tracking-widest">
+              class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#CDDDFF] text-[#374763] text-[11px] font-bold uppercase tracking-widest">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                    stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                 <polyline points="2 17 12 22 22 17"></polyline>
                 <polyline points="2 12 12 17 22 12"></polyline>
               </svg>
-              EPIC-{{ task.epic_id.substring(0, 3) }}
+              @if (epicDetails) {
+                {{ epicDetails.epic_id }}
+              } @else {
+                <span class="animate-pulse bg-blue-200/50 h-2.5 w-12 rounded"></span>
+              }
             </div>
           }
         </div>
@@ -80,7 +84,7 @@
         <!-- Mobile Grid Data -->
         <div class="grid grid-cols-2 gap-3 mb-6">
           <!-- Assignee -->
-          <div class="bg-[#F8FAFC] rounded-xl p-4 flex flex-col justify-center">
+          <div class="bg-[#F1F3FF] rounded-lg p-4 flex flex-col justify-center">
             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Assignee</span>
             <div class="flex items-center gap-2">
               @if (task.assignee) {
@@ -89,17 +93,17 @@
                   {{ getInitials(task.assignee.name) }}
                 </div>
                 <span
-                  class="text-[13px] font-medium text-[#041B3C] truncate">{{ task.assignee.name || task.assignee.email }}</span>
+                  class="text-[12px] font-medium text-[#041B3C] truncate">{{ task.assignee.name || task.assignee.email }}</span>
               } @else {
-                <span class="text-[13px] font-medium text-slate-500">Unassigned</span>
+                <span class="text-[12px] font-medium text-slate-500">Unassigned</span>
               }
             </div>
           </div>
 
           <!-- Due Date -->
-          <div class="bg-[#F8FAFC] rounded-xl p-4 flex flex-col justify-center">
+          <div class="bg-[#F1F3FF] rounded-lg p-4 flex flex-col justify-center">
             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Due Date</span>
-            <div class="flex items-center gap-1.5 text-[13px] font-medium text-[#041B3C]">
+            <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#041B3C]">
               <svg class="text-[#0052CC]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -112,7 +116,7 @@
           </div>
 
           <!-- Reporter -->
-          <div class="bg-[#F8FAFC] rounded-xl p-4 flex flex-col justify-center">
+          <div class="bg-[#F1F3FF] rounded-lg p-4 flex flex-col justify-center">
             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Created By</span>
             <div class="flex items-center gap-2">
               <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold"
@@ -120,19 +124,18 @@
                 {{ getInitials($any(task).created_by?.name || 'System') }}
               </div>
               <span
-                class="text-[13px] font-medium text-[#041B3C] truncate">{{ $any(task).created_by?.name || 'System' }}</span>
+                class="text-[12px] font-medium text-[#041B3C] truncate">{{ $any(task).created_by?.name || 'System' }}</span>
             </div>
           </div>
 
           <!-- Created At -->
-          <div class="bg-[#F8FAFC] rounded-xl p-4 flex flex-col justify-center">
+          <div class="bg-[#F1F3FF] rounded-lg p-4 flex flex-col justify-center">
             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Created At</span>
-            <div class="flex items-center gap-1.5 text-[13px] font-medium text-[#041B3C]">
-              <svg class="text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
+            <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#041B3C]">
+              <svg width="14" height="14" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.25 10.5C3.90833 10.5 2.73924 10.0552 1.74271 9.16562C0.746181 8.27604 0.175 7.16528 0.0291667 5.83333H1.225C1.36111 6.84444 1.81076 7.68056 2.57396 8.34167C3.33715 9.00278 4.22917 9.33333 5.25 9.33333C6.3875 9.33333 7.35243 8.93715 8.14479 8.14479C8.93715 7.35243 9.33333 6.3875 9.33333 5.25C9.33333 4.1125 8.93715 3.14757 8.14479 2.35521C7.35243 1.56285 6.3875 1.16667 5.25 1.16667C4.57917 1.16667 3.95208 1.32222 3.36875 1.63333C2.78542 1.94444 2.29444 2.37222 1.89583 2.91667H3.5V4.08333H0V0.583333H1.16667V1.95417C1.6625 1.33194 2.26771 0.850694 2.98229 0.510417C3.69688 0.170139 4.45278 0 5.25 0C5.97917 0 6.66215 0.138542 7.29896 0.415625C7.93576 0.692708 8.48993 1.06701 8.96146 1.53854C9.43299 2.01007 9.80729 2.56424 10.0844 3.20104C10.3615 3.83785 10.5 4.52083 10.5 5.25C10.5 5.97917 10.3615 6.66215 10.0844 7.29896C9.80729 7.93576 9.43299 8.48993 8.96146 8.96146C8.48993 9.43299 7.93576 9.80729 7.29896 10.0844C6.66215 10.3615 5.97917 10.5 5.25 10.5ZM6.88333 7.7L4.66667 5.48333V2.33333H5.83333V5.01667L7.7 6.88333L6.88333 7.7Z" fill="#4F5F7B"/>
               </svg>
+
               {{ task.created_at | date:'dd MMM yyyy' }}
             </div>
           </div>
@@ -148,11 +151,12 @@
 
       <!-- Desktop Layout -->
         <!-- Left Pane -->
-      <div class="hidden md:flex flex-col flex-1 p-8 overflow-y-auto relative">
+      <div class="hidden md:flex flex-col w-full flex-1 overflow-y-auto relative">
 
         <!-- Header Row -->
-        <div class="flex items-center gap-3 mb-6">
-          <span class="bg-[#E8EDF9] text-[#0052CC] px-2.5 py-1 text-[12px] font-bold tracking-widest uppercase rounded">TASK-{{ task.id.substring(0, 4) }}</span>
+        <div class="flex items-center gap-3 p-6">
+          <span
+            class="bg-[#E8EDF9] text-[#0052CC] px-2.5 py-1 text-[12px] font-bold tracking-widest uppercase rounded">{{ task.task_id }}</span>
 
           @if (task.epic_id) {
             <div
@@ -163,27 +167,44 @@
                 <polyline points="2 17 12 22 22 17"></polyline>
                 <polyline points="2 12 12 17 22 12"></polyline>
               </svg>
-              EPIC-{{ task.epic_id.substring(0, 3) }}
+              @if (epicDetails) {
+                {{ epicDetails?.epic_id }}
+                <span class="text-slate-400 font-medium hidden lg:inline ml-1">({{ epicDetails.title }})</span>
+              } @else {
+                <span class="animate-pulse bg-slate-200 h-3 w-20 rounded mx-1"></span>
+              }
               <svg class="ml-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
+          } @else {
+            <!-- No Epic Badge -->
+            <div
+              class="flex items-center gap-1.5 px-3 py-1 rounded border border-slate-200 bg-slate-50 text-slate-400 text-[12px] font-bold">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              No Epic
+            </div>
           }
         </div>
 
         <!-- Desktop Title -->
-        <h1 class="text-[32px] font-bold text-[#041B3C] leading-tight mb-8">{{ task.title }}</h1>
+        <h1 class="text-[32px] font-bold text-[#041B3C] leading-tight px-6">{{ task.title }}</h1>
 
         <!-- Desktop Description -->
-        <span class="text-[12px] font-bold text-[#041B3C] tracking-widest uppercase mb-3 block">Description</span>
+        <span class="text-[12px] font-bold text-[#041B3C] tracking-widest uppercase p-6 block">Description</span>
         <div
-          class="border border-slate-200 rounded-xl p-5 text-[15px] text-[#041B3C] bg-white h-full leading-relaxed mb-8">
+          class="border border-slate-200 rounded-md p-2 text-[15px] text-[#041B3C] mx-6 my-0 bg-white min-h-70 leading-relaxed mb-4">
           {{ task.description || 'No description provided.' }}
         </div>
 
         <!-- Desktop Footer Buttons -->
-        <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+        <div class="flex items-center justify-between mt-auto py-4 px-8 border-t bg-[#E8EDFF] border-slate-100">
           <button (click)="copyLink()"
                   class="flex items-center gap-2 text-slate-500 hover:text-[#041B3C] transition-colors text-[14px] font-bold cursor-pointer">
             <svg width="18" height="18" viewBox="0 0 15 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -195,7 +216,7 @@
           </button>
 
           <button (click)="onClose()"
-                  class="bg-[#D7E2FF] hover:bg-[#E8EDF9] text-slate-600 font-bold px-6 py-2.5 rounded-lg transition-colors cursor-pointer">
+                  class="bg-[#D7E2FF] hover:bg-white text-slate-600 font-bold px-4 py-2 rounded-md transition-colors cursor-pointer">
             Close
           </button>
         </div>
@@ -203,7 +224,7 @@
 
       <!-- Right Pane -->
       <div
-        class="hidden md:flex flex-col w-[320px] bg-[#F8FAFC] border-l border-slate-100 p-8 overflow-y-auto shrink-0">
+        class="hidden md:flex flex-col w-[320px] bg-[#E8EDFF] border-l border-slate-100 p-8 overflow-y-auto shrink-0">
 
         <div class="flex flex-col gap-6">
 
@@ -213,7 +234,7 @@
             <div
               class="flex items-center justify-between px-4 py-2.5 rounded-lg border cursor-pointer {{ getStatusConfig(task.status).bg }} {{ getStatusConfig(task.status).border }}">
             <span
-              class="text-[13px] font-bold tracking-widest uppercase {{ getStatusConfig(task.status).text }}">{{ getStatusConfig(task.status).label }}</span>
+              class="text-[12px] font-bold tracking-widest uppercase {{ getStatusConfig(task.status).text }}">{{ getStatusConfig(task.status).label }}</span>
               <svg class="{{ getStatusConfig(task.status).text }}" width="14" height="14" viewBox="0 0 24 24"
                    fill="none"
                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

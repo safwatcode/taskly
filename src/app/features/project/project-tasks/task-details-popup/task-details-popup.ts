@@ -11,7 +11,11 @@ import {
 } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
 import { Auth } from '../../../../core/auth/services/auth';
-import { ProjectMemberResponse, ProjectTaskResponse } from '../../models/project.model';
+import {
+  ProjectEpicResponse,
+  ProjectMemberResponse,
+  ProjectTaskResponse,
+} from '../../models/project.model';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -36,6 +40,7 @@ export class TaskDetailsPopup implements OnInit {
 
   task: ProjectTaskResponse | null = null;
   members: ProjectMemberResponse[] = [];
+  epicDetails: ProjectEpicResponse | null = null;
 
   isLoading = true;
   errorMessage: string | null = null;
@@ -109,6 +114,20 @@ export class TaskDetailsPopup implements OnInit {
           }
 
           this.task = fetchedTask;
+
+          // If the task belongs to an epic, fetch the epic details!
+          if (this.task.epic_id) {
+            this.projectService
+              .getEpicDetails(this.projectId, this.task.epic_id)
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: (epic) => {
+                  this.epicDetails = epic;
+                  this.cdr.detectChanges();
+                },
+              });
+          }
+
           this.isLoading = false;
           this.cdr.detectChanges();
         },
