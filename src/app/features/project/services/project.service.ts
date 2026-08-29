@@ -247,6 +247,23 @@ export class ProjectService {
         catchError(this.handleError.bind(this)),
       );
   }
+
+  getTaskDetails(projectId: string, taskId: string): Observable<ProjectTaskResponse> {
+    const params = new HttpParams()
+      .set('project_id', `eq.${projectId}`)
+      .set('id', `eq.${taskId}`);
+
+    return this.http.get<ProjectTaskResponse[]>(this.projectTasksURL, { params }).pipe(
+      map((tasks) => {
+        if (!tasks || tasks.length === 0) {
+          throw new Error('Task not found'); // Edge case handling
+        }
+        return tasks[0]; // Returns single task
+      }),
+      catchError(this.handleError.bind(this))
+    );
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 

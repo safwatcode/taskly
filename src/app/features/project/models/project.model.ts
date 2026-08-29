@@ -83,7 +83,7 @@ export interface ProjectTaskResponse {
   };
 }
 
-// Project Tasks - Board View
+// Project Tasks
 export interface BoardColumn {
   id: string;
   label: string;

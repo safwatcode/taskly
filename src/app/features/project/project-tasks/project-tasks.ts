@@ -19,6 +19,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { TaskDetailsPopup } from './task-details-popup/task-details-popup';
 
 @Component({
   selector: 'app-project-tasks',
@@ -34,6 +35,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     UpperCasePipe,
     CdkDragPreview,
     ReactiveFormsModule,
+    TaskDetailsPopup,
   ],
   templateUrl: './project-tasks.html',
   styleUrl: './project-tasks.css',
@@ -50,6 +52,7 @@ export class ProjectTasks implements OnInit {
 
   projectId = '';
   projectName = '';
+  selectedTaskId: string | null = null;
 
   currentView: 'board' | 'list' = 'board';
   // State custom View Switcher dropdown
@@ -423,6 +426,14 @@ export class ProjectTasks implements OnInit {
     if (due.getTime() < today.getTime()) return 'DELAYED';
     if (due.getTime() === today.getTime()) return 'TODAY';
     return 'NORMAL';
+  }
+
+  openTaskDetails(taskId: string): void {
+    this.selectedTaskId = taskId;
+  }
+
+  closeTaskDetails(): void {
+    this.selectedTaskId = null;
   }
 
   // Pagination Control

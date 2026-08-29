@@ -19,11 +19,12 @@ import { UserProfileResponse } from '../../../../core/auth/models/user-profile.m
 import { DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TaskDetailsPopup } from '../../project-tasks/task-details-popup/task-details-popup';
 
 @Component({
   selector: 'app-epic-details-popup',
   standalone: true,
-  imports: [NgClass, DatePipe, FormsModule],
+  imports: [NgClass, DatePipe, FormsModule, TaskDetailsPopup],
   templateUrl: './epic-details-popup.html',
   styleUrl: './epic-details-popup.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +50,7 @@ export class EpicDetailsPopup implements OnInit {
   tasks: any[] = [];
   isTasksLoading = true;
   tasksError: string | null = null;
+  selectedTaskId: string | null = null;
 
   // Edit States
   isEditingTitle = false;
@@ -343,6 +345,16 @@ export class EpicDetailsPopup implements OnInit {
       alert('Epic link copied to the clipboard!');
     });
   }
+
+  openTaskDetails(taskId: string): void {
+    this.selectedTaskId = taskId;
+  }
+
+  closeTaskDetails(): void {
+    this.selectedTaskId = null;
+  }
+
+  // UI Helpers
 
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';

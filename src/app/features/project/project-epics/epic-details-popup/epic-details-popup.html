@@ -1,22 +1,21 @@
-<!-- Toast Error Notification -->
-@if (toastError) {
-  <div
-    class="fixed top-6 right-6 bg-[#BA1A1A] text-white px-5 py-3.5 rounded-lg shadow-lg shadow-red-900/20 z-100 animate-fade-in-up flex items-center gap-3 font-medium text-sm">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-         stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="12"></line>
-      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-    </svg>
-    {{ toastError }}
-  </div>
-}
-
 <!-- Modal Backdrop -->
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 md:p-6"
   (click)="onClose()">
 
+  <!-- Toast Error Notification -->
+  @if (toastError) {
+    <div
+      class="fixed top-6 right-6 bg-[#BA1A1A] text-white px-5 py-3.5 rounded-lg shadow-lg shadow-red-900/20 z-100 animate-fade-in-up flex items-center gap-3 font-medium text-sm">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ toastError }}
+    </div>
+  }
   <!-- Modal Content -->
   <div
     class="bg-white rounded-2xl shadow-xl w-full max-w-162.5 max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up"
@@ -290,7 +289,6 @@
 
           <!-- Tasks Content -->
           @if (isTasksLoading) {
-
             <!-- Loading State -->
             <div class="flex flex-col gap-3">
               @for (i of [1, 2]; track i) {
@@ -308,7 +306,6 @@
             </div>
 
           } @else if (tasksError) {
-
             <!-- Error State -->
             <div
               class="border-2 border-dashed border-red-200 bg-red-50 rounded-xl p-6 flex flex-col items-center justify-center text-center">
@@ -319,7 +316,6 @@
             </div>
 
           } @else if (tasks.length === 0) {
-
             <!-- Empty State -->
             <div
               class="border-2 border-dashed border-slate-200 bg-[#F8FAFC] rounded-xl p-8 flex flex-col items-center justify-center text-center mt-2">
@@ -351,6 +347,7 @@
               class="flex flex-col gap-3 md:gap-0 md:bg-white md:border md:border-slate-100 md:rounded-xl md:shadow-sm">
               @for (task of tasks; track task.id) {
                 <div
+                  (click)="openTaskDetails(task.id)"
                   class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm md:border-0 md:border-b md:border-slate-100 md:rounded-none md:shadow-none md:last:border-b-0 hover:bg-slate-50 transition-colors cursor-pointer group">
 
                   <div class="flex justify-between items-center gap-4">
@@ -448,4 +445,12 @@
       </div>
     }
   </div>
+  <!-- Task Details Popup Overlay (Renders on top of Epic Modal) -->
+  @if (selectedTaskId) {
+    <app-task-details-popup
+      [taskId]="selectedTaskId"
+      [projectId]="projectId"
+      (closeDialog)="closeTaskDetails()">
+    </app-task-details-popup>
+  }
 </div>

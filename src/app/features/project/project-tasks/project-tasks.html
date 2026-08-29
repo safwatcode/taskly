@@ -14,6 +14,15 @@
     </div>
   }
 
+  <!-- Task Details Popup Overlay -->
+  @if (selectedTaskId) {
+    <app-task-details-popup
+      [taskId]="selectedTaskId"
+      [projectId]="projectId"
+      (closeDialog)="closeTaskDetails()">
+    </app-task-details-popup>
+  }
+
   <!-- Header Section -->
   <div class="mb-4 md:mb-2 shrink-0">
     <div class="hidden md:flex text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase items-center gap-2">
@@ -245,7 +254,7 @@
                 <div
                   class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse opacity-70"></div>
               } @else if (col.error) {
-                <!-- Search error state for board -->
+                <!-- Search error state for board view -->
                 <div
                   class="bg-red-50 border border-red-100 rounded-xl p-4 text-center text-[12px] text-red-500 font-medium">
                   {{ searchControl.value ? 'Failed to search tasks' : 'Failed to load tasks' }}
@@ -262,7 +271,9 @@
                 </button>
 
                 @for (task of col.tasks; track task.id) {
-                  <div cdkDrag
+                  <div
+                    cdkDrag
+                       (click)="openTaskDetails(task.id)"
                        class="rounded-lg border-l-4 {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing">
                     <div *cdkDragPreview
                          class="rounded-xl {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col shadow-2xl w-75 box-border opacity-100 z-9999">
@@ -341,7 +352,7 @@
               </tr>
             } @else {
               @for (task of listTasks; track task.id) {
-                <tr class="hover:bg-slate-50 transition-colors group">
+                <tr class="hover:bg-slate-50 transition-colors group cursor-pointer" (click)="openTaskDetails(task.id)">
                   <td class="px-6 py-4 text-[13px] font-bold text-[#0052CC]">
                     TASK-{{ task.id.substring(0, 4) | uppercase }}
                   </td>
@@ -391,6 +402,7 @@
           </tbody>
         </table>
 
+        <!-- Desktop Pagination-->
         @if (!isListLoading && !listError && listTotalItems > 0) {
           <div class="flex items-center justify-end px-6 py-4 border-t border-slate-100 bg-white">
             <div class="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
@@ -442,6 +454,7 @@
         } @else {
           @for (task of listTasks; track task.id) {
             <div
+              (click)="openTaskDetails(task.id)"
               class="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100 flex flex-col gap-2 relative cursor-pointer active:bg-slate-50 transition-colors">
               <div class="flex justify-between items-start">
                 <span
