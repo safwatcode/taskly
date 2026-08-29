@@ -185,11 +185,24 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  getProjectTasksByStatus(projectId: string, status: string): Observable<ProjectTaskResponse[]> {
-    const params = new HttpParams()
+  getProjectTasksByStatus(
+    projectId: string,
+    status: string,
+    limit = 10,
+    offset = 0,
+    searchTerm = '',
+  ): Observable<ProjectTaskResponse[]> {
+    let params = new HttpParams()
       .set('project_id', `eq.${projectId}`)
       .set('status', `eq.${status}`)
-      .set('order', 'created_at.desc');
+      .set('order', 'created_at.desc')
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
+
+    // Apply wildcard case-insensitive search
+    if (searchTerm && searchTerm.trim() !== '') {
+      params = params.set('title', `ilike.%${searchTerm.trim()}%`);
+    }
 
     return this.http
       .get<ProjectTaskResponse[]>(this.projectTasksURL, { params })
@@ -202,12 +215,18 @@ export class ProjectService {
     projectId: string,
     limit = 5,
     offset = 0,
+    searchTerm = '',
   ): Observable<PaginatedResponse<ProjectTaskResponse>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('project_id', `eq.${projectId}`)
       .set('order', 'created_at.desc')
       .set('limit', limit.toString())
       .set('offset', offset.toString());
+
+    // Apply wildcard case-insensitive search
+    if (searchTerm && searchTerm.trim() !== '') {
+      params = params.set('title', `ilike.%${searchTerm.trim()}%`);
+    }
 
     return this.http
       .get<ProjectTaskResponse[]>(this.projectTasksURL, {

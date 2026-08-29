@@ -93,4 +93,8 @@ export interface BoardColumn {
   tasks: ProjectTaskResponse[];
   isLoading: boolean;
   error: boolean;
+  offset?: number;
+  hasMore?: boolean;
+  isFetchingMore?: boolean;
+  loadingMoreError?: boolean;
 }

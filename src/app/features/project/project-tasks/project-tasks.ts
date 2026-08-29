@@ -17,6 +17,8 @@ import {
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-project-tasks',
@@ -31,6 +33,7 @@ import {
     NgTemplateOutlet,
     UpperCasePipe,
     CdkDragPreview,
+    ReactiveFormsModule,
   ],
   templateUrl: './project-tasks.html',
   styleUrl: './project-tasks.css',
@@ -68,6 +71,10 @@ export class ProjectTasks implements OnInit {
   // Tracking mobile state & infinite scroll loading
   isMobileView = false;
   isListLoadingMore = false;
+  listLoadingMoreError = false;
+
+  // Search Control
+  searchControl = new FormControl('');
 
   toastError: string | null = null;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -174,14 +181,13 @@ export class ProjectTasks implements OnInit {
       .subscribe(([params, qParams, breakpointState]) => {
         const newProjectId = params.get('projectId') || '';
         const viewParam = qParams.get('view');
-
-        // Save the mobile state to the variable
         this.isMobileView = breakpointState.matches;
 
         if (newProjectId && newProjectId !== this.projectId) {
           this.projectId = newProjectId;
           this.projectContext.setProjectId(this.projectId);
           this.fetchProjectName();
+          this.searchControl.setValue('', { emitEvent: false }); // Reset search on project switch
         }
 
         this.currentView = this.isMobileView || viewParam === 'list' ? 'list' : 'board';
@@ -191,19 +197,29 @@ export class ProjectTasks implements OnInit {
             this.lastFetchedProjectId !== this.projectId ||
             this.lastFetchedView !== this.currentView
           ) {
-            if (this.currentView === 'list') {
-              this.listCurrentPage = 1;
-              // Initial fetch
-              this.fetchListTasks();
-            } else {
-              this.loadAllColumnsIndependently();
-            }
-
+            this.executeActiveViewFetch();
             this.lastFetchedProjectId = this.projectId;
             this.lastFetchedView = this.currentView;
           }
         }
       });
+
+    // Search Debounce Listener
+    this.searchControl.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.executeActiveViewFetch();
+      });
+  }
+
+  // Wrapper function to trigger fetches and reset limits/offsets
+  private executeActiveViewFetch(): void {
+    if (this.currentView === 'list') {
+      this.listCurrentPage = 1;
+      this.fetchListTasks();
+    } else {
+      this.loadAllColumnsIndependently();
+    }
   }
 
   switchView(view: 'board' | 'list'): void {
@@ -220,10 +236,12 @@ export class ProjectTasks implements OnInit {
     });
   }
 
-  private fetchListTasks(append = false): void {
+  protected fetchListTasks(append = false): void {
     if (append) {
       this.isListLoadingMore = true;
+      this.listLoadingMoreError = false;
     } else {
+      // Providing full loader when changing page
       this.isListLoading = true;
     }
     this.listError = false;
@@ -232,15 +250,13 @@ export class ProjectTasks implements OnInit {
     const offset = (this.listCurrentPage - 1) * limit;
 
     this.projectService
-      .getAllProjectTasks(this.projectId, limit, offset)
+      .getAllProjectTasks(this.projectId, limit, offset, this.searchControl.value || '')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           if (append) {
-            // Append new tasks to the existing array for infinite scroll
             this.listTasks = [...this.listTasks, ...response.content];
           } else {
-            // Replace array for classic desktop pagination
             this.listTasks = response.content;
           }
           this.listTotalItems = response.totalElements;
@@ -249,13 +265,19 @@ export class ProjectTasks implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.listError = true;
+          if (append) {
+            this.listLoadingMoreError = true;
+            this.listCurrentPage--; // Rollback page if failure
+          } else {
+            this.listError = true;
+          }
           this.isListLoading = false;
           this.isListLoadingMore = false;
           this.cdr.detectChanges();
         },
       });
   }
+
   onListScroll(event: Event): void {
     // Infinite scroll behavior on mobile screens
     if (!this.isMobileView || this.isListLoading || this.isListLoadingMore) return;
@@ -271,6 +293,7 @@ export class ProjectTasks implements OnInit {
       this.fetchListTasks(true);
     }
   }
+
   private fetchProjectName(): void {
     this.projectService
       .getProjectById(this.projectId)
@@ -286,12 +309,24 @@ export class ProjectTasks implements OnInit {
       column.isLoading = true;
       column.error = false;
 
+      // Reset infinite scroll state per column
+      column.offset = 0;
+      column.hasMore = true;
+      column.loadingMoreError = false;
+
       this.projectService
-        .getProjectTasksByStatus(this.projectId, column.id)
+        .getProjectTasksByStatus(
+          this.projectId,
+          column.id,
+          10,
+          column.offset,
+          this.searchControl.value || '',
+        )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (tasks) => {
             column.tasks = tasks || [];
+            if (tasks.length < 10) column.hasMore = false;
             column.isLoading = false;
             this.cdr.detectChanges();
           },
@@ -304,6 +339,47 @@ export class ProjectTasks implements OnInit {
     });
   }
 
+  onBoardColumnScroll(event: Event, col: BoardColumn): void {
+    if (col.isLoading || col.isFetchingMore || !col.hasMore || col.loadingMoreError) return;
+
+    const target = event.target as HTMLElement;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
+
+    if (isNearBottom) {
+      this.loadMoreTasksForColumn(col);
+    }
+  }
+
+  // Handle appending new tasks to specific columns via scroll
+  loadMoreTasksForColumn(col: BoardColumn): void {
+    col.isFetchingMore = true;
+    col.loadingMoreError = false;
+    col.offset! += 10;
+
+    this.projectService
+      .getProjectTasksByStatus(
+        this.projectId,
+        col.id,
+        10,
+        col.offset,
+        this.searchControl.value || '',
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (tasks) => {
+          col.tasks = [...col.tasks, ...tasks];
+          if (tasks.length < 10) col.hasMore = false;
+          col.isFetchingMore = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          col.loadingMoreError = true;
+          col.isFetchingMore = false;
+          col.offset! -= 10; // Rollback offset
+          this.cdr.detectChanges();
+        },
+      });
+  }
   drop(event: CdkDragDrop<ProjectTaskResponse[]>, newStatus: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
@@ -338,16 +414,6 @@ export class ProjectTasks implements OnInit {
     }
   }
 
-  private showToast(message: string): void {
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastError = message;
-    this.cdr.detectChanges();
-    this.toastTimeout = setTimeout(() => {
-      this.toastError = null;
-      this.cdr.detectChanges();
-    }, 4000);
-  }
-
   getTaskDateState(dateString: string | null | undefined): 'TODAY' | 'DELAYED' | 'NORMAL' {
     if (!dateString) return 'NORMAL';
     const due = new Date(dateString);
@@ -373,7 +439,18 @@ export class ProjectTasks implements OnInit {
       this.fetchListTasks();
     }
   }
+
   // UI Helpers
+  private showToast(message: string): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastError = message;
+    this.cdr.detectChanges();
+    this.toastTimeout = setTimeout(() => {
+      this.toastError = null;
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
   getStatusBadge(status: string) {
     switch (status) {
       case 'TO_DO':
