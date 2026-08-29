@@ -1,5 +1,4 @@
-<!-- Wrapper Hidden on Mobile, Flex on Desktop to handle the list view only in mobile screens -->
-<div class="hidden md:flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden min-w-0 relative">
+<div class="flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden min-w-0 relative">
 
   <!-- Toast Error Notification -->
   @if (toastError) {
@@ -16,7 +15,7 @@
   }
 
   <!-- Header Section -->
-  <div class="mb-6 md:mb-8 shrink-0">
+  <div class="mb-4 md:mb-8 shrink-0">
     <!-- Breadcrumb -->
     <div class="hidden md:flex text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase items-center gap-2">
       <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">PROJECTS</a>
@@ -27,15 +26,17 @@
     </div>
 
     <!-- Title & Controls Row -->
-    <div class="flex items-center justify-between gap-4 mt-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-3">
       <div>
         <h1 class="text-[28px] font-bold text-[#041B3C] tracking-tight">Active Workboard</h1>
-        <p class="text-slate-500 text-sm">Curating Project milestones and execution pipeline.</p>
+        <p class="hidden md:block text-slate-500 text-sm">Curating Project milestones and execution pipeline.</p>
       </div>
 
-      <div class="flex items-center gap-3 shrink-0">
+      <!-- Controls (Search & View Switcher) -->
+      <div class="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto shrink-0">
+
         <!-- Search Input -->
-        <div class="relative w-64">
+        <div class="relative w-full md:w-64">
           <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                stroke-linejoin="round">
@@ -43,163 +44,412 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input type="text" placeholder="Search tasks..."
-                 class="w-full bg-[#E8EDF9] text-[#041B3C] text-[13px] font-medium rounded-lg pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-[#003D9B]/20 transition-all placeholder:text-slate-400">
+                 class="w-full bg-[#E8EDF9] text-[#041B3C] text-[13px] font-medium rounded-lg pl-10 pr-4 py-2.5 md:py-2.5 outline-none focus:ring-2 focus:ring-[#003D9B]/20 transition-all placeholder:text-slate-400">
         </div>
 
-        <!-- View Switcher -->
-        <div class="relative">
-          <select
-            class="appearance-none bg-white border border-slate-200 text-[#041B3C] text-[13px] font-bold rounded-lg pl-10 pr-8 py-2.5 outline-none hover:bg-slate-50 cursor-pointer shadow-sm">
-            <option value="board" selected>Board View</option>
-            <option value="list">List View</option>
-          </select>
-          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" width="16" height="16"
-               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-               stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <svg class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" width="14"
-               height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-               stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+        <!-- Desktop View Switcher (Hidden on Mobile) -->
+        <div class="relative hidden md:block z-50">
+
+          <!-- Trigger Button -->
+          <div
+            (click)="isViewDropdownOpen = !isViewDropdownOpen"
+            class="flex items-center justify-between bg-white border border-slate-200 text-[#041B3C] text-[13px] font-bold rounded-lg pl-10 pr-4 py-2.5 outline-none hover:bg-slate-50 cursor-pointer min-w-37.5 transition-all"
+            [ngClass]="isViewDropdownOpen ? 'border-[#003D9B]/50 ring-2 ring-[#003D9B]/20' : ''">
+
+            <!-- Dynamic View Icon (Left) -->
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" width="16" height="16"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+              @if (currentView === 'board') {
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              } @else {
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              }
+            </svg>
+
+            <span>{{ currentView === 'board' ? 'Board View' : 'List View' }}</span>
+
+            <!-- Chevron Icon (Right) -->
+            <svg class="text-slate-400 ml-3 transition-transform duration-200 shrink-0"
+                 [ngClass]="isViewDropdownOpen ? 'rotate-180' : ''" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+
+          <!-- Invisible Backdrop to close dropdown -->
+          @if (isViewDropdownOpen) {
+            <div
+              class="fixed inset-0 z-40" (click)="isViewDropdownOpen = false"></div>
+          }
+
+          <!-- Dropdown Menu -->
+          @if (isViewDropdownOpen) {
+            <div
+              class="absolute top-[calc(100%+4px)] right-0 w-full min-w-40 bg-white border border-slate-100 rounded-lg shadow-sm z-50 py-1.5 animate-fade-in-up origin-top">
+
+              <!-- Board View Option -->
+              <div
+                (click)="switchView('board')"
+                class="flex items-center justify-between px-4 py-2.5 cursor-pointer group hover:bg-[#003D9B] transition-colors">
+                <div
+                  class="flex items-center gap-2.5 text-[13px] font-bold text-[#041B3C] group-hover:text-white transition-colors">
+                  <svg class="text-slate-500 group-hover:text-white transition-colors" width="14" height="14"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                       stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span>Board View</span>
+                </div>
+                @if (currentView === 'board') {
+                  <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-2" width="16" height="16"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                       stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                }
+              </div>
+
+              <!-- Divider -->
+              <div class="h-px bg-slate-100 my-1 mx-3"></div>
+
+              <!-- List View Option -->
+              <div
+                (click)="switchView('list')"
+                class="flex items-center justify-between px-4 py-2.5 cursor-pointer group hover:bg-[#003D9B] transition-colors">
+                <div
+                  class="flex items-center gap-2.5 text-[13px] font-bold text-[#041B3C] group-hover:text-white transition-colors">
+                  <svg class="text-slate-500 group-hover:text-white transition-colors" width="14" height="14"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                       stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                  </svg>
+                  <span>List View</span>
+                </div>
+                @if (currentView === 'list') {
+                  <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-2" width="16" height="16"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                       stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                }
+              </div>
+
+            </div>
+          }
         </div>
+
+        <!-- Mobile Add Task Button (mobile only) -->
+        <button
+          class="md:hidden w-full bg-[#0052CC] hover:bg-blue-800 transition-colors text-white py-2.5 rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5"
+          [routerLink]="['/project', projectId, 'tasks', 'new']">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Create Task
+        </button>
+
       </div>
     </div>
   </div>
 
-  <!-- Horizontal Scrolling Board Canvas -->
-  <div
-    class="flex-1 overflow-x-auto overflow-y-hidden pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-slate-200/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
+  <ng-template #taskCardContent let-task="task">
+    <h4 class="font-bold text-[#041B3C] text-[14px] leading-snug mb-5">{{ task.title }}</h4>
 
-    <div class="flex gap-6 h-full items-start w-max px-1 pb-2" cdkDropListGroup>
-
-      @for (col of boardColumns; track col.id) {
-        <!-- board Column -->
-        <div class="w-[320px] flex flex-col max-h-full">
-
-          <!-- Column Header -->
-          <div class="flex items-center justify-between mb-4 px-1 shrink-0">
-            <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full shadow-sm {{col.dotClass}}"></div>
-              <h3 class="font-bold text-[12px] text-slate-600 uppercase tracking-widest">{{ col.label }}</h3>
-              @if (!col.isLoading && !col.error) {
-                <span
-                  class="bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold px-2 py-0.5 rounded ml-1">{{ col.tasks.length }}</span>
-              }
-            </div>
-            <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
-                    class="text-slate-400 hover:text-[#0052CC] hover:bg-[#E8EDF9] w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
+    <div class="flex items-end justify-between mt-auto">
+      @if (task.due_date) {
+        @if (getTaskDateState(task.due_date) === 'DELAYED') {
+          <div
+            class="flex items-center gap-1.5 text-[#BA1A1A] font-bold text-[10px] tracking-widest uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            DELAYED
           </div>
-
-          <!-- Vertical Scrolling Task List Area -->
-          <div cdkDropList
-               [cdkDropListData]="col.tasks"
-               (cdkDropListDropped)="drop($event, col.id)"
-               class="flex-1 overflow-y-auto pr-2 pb-12 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full min-h-37.5">
-
-            @if (col.isLoading) {
-              <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse"></div>
-              <div
-                class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse opacity-70"></div>
-            } @else if (col.error) {
-              <div
-                class="bg-red-50 border border-red-100 rounded-xl p-4 text-center text-[12px] text-red-500 font-medium">
-                Failed to load tasks.
-              </div>
-            } @else {
-
-              <!--'Add Task' button inside the column -->
-              <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
-                      class="w-full border-2 border-dashed border-slate-200 rounded-lg py-3 flex justify-center items-center gap-2 text-slate-400 hover:text-slate-600 hover:bg-white hover:border-slate-300 transition-all font-bold text-[11px] tracking-widest uppercase cursor-pointer mb-1 shadow-sm shrink-0">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M6.75 11.25H8.25V8.25H11.25V6.75H8.25V3.75H6.75V6.75H3.75V8.25H6.75V11.25ZM7.5 15C6.4625 15 5.4875 14.8031 4.575 14.4094C3.6625 14.0156 2.86875 13.4812 2.19375 12.8062C1.51875 12.1312 0.984375 11.3375 0.590625 10.425C0.196875 9.5125 0 8.5375 0 7.5C0 6.4625 0.196875 5.4875 0.590625 4.575C0.984375 3.6625 1.51875 2.86875 2.19375 2.19375C2.86875 1.51875 3.6625 0.984375 4.575 0.590625C5.4875 0.196875 6.4625 0 7.5 0C8.5375 0 9.5125 0.196875 10.425 0.590625C11.3375 0.984375 12.1312 1.51875 12.8062 2.19375C13.4812 2.86875 14.0156 3.6625 14.4094 4.575C14.8031 5.4875 15 6.4625 15 7.5C15 8.5375 14.8031 9.5125 14.4094 10.425C14.0156 11.3375 13.4812 12.1312 12.8062 12.8062C12.1312 13.4812 11.3375 14.0156 10.425 14.4094C9.5125 14.8031 8.5375 15 7.5 15ZM7.5 13.5C9.175 13.5 10.5938 12.9188 11.7563 11.7563C12.9188 10.5938 13.5 9.175 13.5 7.5C13.5 5.825 12.9188 4.40625 11.7563 3.24375C10.5938 2.08125 9.175 1.5 7.5 1.5C5.825 1.5 4.40625 2.08125 3.24375 3.24375C2.08125 4.40625 1.5 5.825 1.5 7.5C1.5 9.175 2.08125 10.5938 3.24375 11.7563C4.40625 12.9188 5.825 13.5 7.5 13.5Z"
-                    fill="#434654" fill-opacity="0.6"/>
-                </svg>
-                ADD NEW TASK
-              </button>
-
-              <!-- Task Cards Loop -->
-              @for (task of col.tasks; track task.id) {
-
-                <div cdkDrag
-                     class="rounded-lg border-l-4 {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing">
-
-                  <div *cdkDragPlaceholder
-                       class="opacity-30 border-2 bg-slate-50 border-dashed border-slate-300 rounded-lg  min-h-25"></div>
-
-                  <h4 class="font-bold text-[#041B3C] text-[14px] leading-snug mb-5">{{ task.title }}</h4>
-
-                  <div class="flex items-end justify-between mt-auto">
-
-                    <!-- Due Date -->
-                    @if (task.due_date) {
-                      @if (getTaskDateState(task.due_date) === 'DELAYED') {
-                        <div
-                          class="flex items-center gap-1.5 text-[#BA1A1A] font-bold text-[10px] tracking-widest uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                              d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                          DELAYED
-                        </div>
-                      } @else if (getTaskDateState(task.due_date) === 'TODAY') {
-                        <div
-                          class="flex items-center gap-1.5 text-[#0052CC] font-bold text-[10px] tracking-widest uppercase">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                          </svg>
-                          TODAY
-                        </div>
-                      } @else {
-                        <div
-                          class="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] tracking-widest uppercase">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                          </svg>
-                          {{ task.due_date | date:'MMM dd' }}
-                        </div>
-                      }
-                    } @else {
-                      <div></div>
-                    }
-
-                    <!-- Assignee Avatar -->
-                    @if (task.assignee) {
-                      <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm"
-                           [ngClass]="getAvatarColorClass(task.assignee.name)"
-                           [title]="task.assignee.name || task.assignee.email">
-                        {{ getInitials(task.assignee.name) }}
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            }
+        } @else if (getTaskDateState(task.due_date) === 'TODAY') {
+          <div class="flex items-center gap-1.5 text-[#0052CC] font-bold text-[10px] tracking-widest uppercase">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            TODAY
           </div>
+        } @else {
+          <div class="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] tracking-widest uppercase">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            {{ task.due_date | date:'MMM dd' }}
+          </div>
+        }
+      } @else {
+        <div></div>
+      }
+      @if (task.assignee) {
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm"
+             [ngClass]="getAvatarColorClass(task.assignee.name)" [title]="task.assignee.name || task.assignee.email">
+          {{ getInitials(task.assignee.name) }}
         </div>
       }
     </div>
-  </div>
+  </ng-template>
+
+  @if (currentView === 'board') {
+
+    <!-- Board view -->
+    <div
+      class="hidden md:block flex-1 overflow-x-auto overflow-y-hidden pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-slate-200/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
+      <div class="flex gap-6 h-full items-start w-max px-1 pb-2" cdkDropListGroup>
+
+        @for (col of boardColumns; track col.id) {
+          <div class="w-[320px] flex flex-col max-h-full">
+            <!-- Column Header -->
+            <div class="flex items-center justify-between mb-4 px-1 shrink-0">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full shadow-sm {{col.dotClass}}"></div>
+                <h3 class="font-bold text-[12px] text-slate-600 uppercase tracking-widest">{{ col.label }}</h3>
+                @if (!col.isLoading && !col.error) {
+                  <span
+                    class="bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold px-2 py-0.5 rounded ml-1">{{ col.tasks.length }}</span>
+                }
+              </div>
+              <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
+                      class="text-slate-400 hover:text-[#0052CC] hover:bg-[#E8EDF9] w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Vertical Task List -->
+            <div cdkDropList [cdkDropListData]="col.tasks" (cdkDropListDropped)="drop($event, col.id)"
+                 class="flex-1 overflow-y-auto pr-2 pb-12 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full min-h-37.5">
+
+              @if (col.isLoading) {
+                <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse"></div>
+                <div
+                  class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm h-28 animate-pulse opacity-70"></div>
+              } @else if (col.error) {
+                <div
+                  class="bg-red-50 border border-red-100 rounded-xl p-4 text-center text-[12px] text-red-500 font-medium">
+                  Failed to load tasks.
+                </div>
+              } @else {
+                <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
+                        class="w-full border-2 border-dashed border-slate-200 rounded-lg py-3 flex justify-center items-center gap-2 text-slate-400 hover:text-slate-600 hover:bg-white hover:border-slate-300 transition-all font-bold text-[11px] tracking-widest uppercase cursor-pointer mb-1 shadow-sm shrink-0">
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M6.75 11.25H8.25V8.25H11.25V6.75H8.25V3.75H6.75V6.75H3.75V8.25H6.75V11.25ZM7.5 15C6.4625 15 5.4875 14.8031 4.575 14.4094C3.6625 14.0156 2.86875 13.4812 2.19375 12.8062C1.51875 12.1312 0.984375 11.3375 0.590625 10.425C0.196875 9.5125 0 8.5375 0 7.5C0 6.4625 0.196875 5.4875 0.590625 4.575C0.984375 3.6625 1.51875 2.86875 2.19375 2.19375C2.86875 1.51875 3.6625 0.984375 4.575 0.590625C5.4875 0.196875 6.4625 0 7.5 0C8.5375 0 9.5125 0.196875 10.425 0.590625C11.3375 0.984375 12.1312 1.51875 12.8062 2.19375C13.4812 2.86875 14.0156 3.6625 14.4094 4.575C14.8031 5.4875 15 6.4625 15 7.5C15 8.5375 14.8031 9.5125 14.4094 10.425C14.0156 11.3375 13.4812 12.1312 12.8062 12.8062C12.1312 13.4812 11.3375 14.0156 10.425 14.4094C9.5125 14.8031 8.5375 15 7.5 15ZM7.5 13.5C9.175 13.5 10.5938 12.9188 11.7563 11.7563C12.9188 10.5938 13.5 9.175 13.5 7.5C13.5 5.825 12.9188 4.40625 11.7563 3.24375C10.5938 2.08125 9.175 1.5 7.5 1.5C5.825 1.5 4.40625 2.08125 3.24375 3.24375C2.08125 4.40625 1.5 5.825 1.5 7.5C1.5 9.175 2.08125 10.5938 3.24375 11.7563C4.40625 12.9188 5.825 13.5 7.5 13.5Z"
+                      fill="#434654" fill-opacity="0.6"/>
+                  </svg>
+                  ADD NEW TASK
+                </button>
+
+                @for (task of col.tasks; track task.id) {
+                  <div cdkDrag
+                       class="rounded-lg border-l-4 {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing">
+                    <div *cdkDragPreview
+                         class="rounded-xl {{col.borderClass}} {{col.bgClass}} p-4 flex flex-col shadow-2xl w-75 box-border opacity-100 z-9999">
+                      <ng-container *ngTemplateOutlet="taskCardContent; context: { task: task }"></ng-container>
+                    </div>
+                    <div *cdkDragPlaceholder
+                         class="opacity-30 border-2 bg-slate-50 border-dashed border-slate-300 rounded-lg min-h-25"></div>
+                    <ng-container *ngTemplateOutlet="taskCardContent; context: { task: task }"></ng-container>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- List view -->
+    <div
+      class="flex-1 overflow-y-auto mt-2 md:mt-4 md:pb-4 custom-scrollbar pr-1 md:pr-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+
+      <!-- Table Format -->
+      <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead>
+          <tr class="border-b border-slate-100 bg-[#F8FAFC]">
+            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Task ID</th>
+            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Title</th>
+            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
+            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Due Date</th>
+            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Assignee</th>
+            <th class="px-6 py-4"></th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @if (isListLoading) {
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+                <tr>
+                  <td colspan="6" class="px-6 py-5">
+                    <div class="h-6 bg-slate-100 rounded w-full animate-pulse"></div>
+                  </td>
+                </tr>
+              }
+            } @else if (listError) {
+              <tr>
+                <td colspan="6" class="px-6 py-10 text-center text-red-500 font-medium">Failed to load tasks.</td>
+              </tr>
+            } @else {
+              @for (task of listTasks; track task.id) {
+                <tr class="hover:bg-slate-50 transition-colors group">
+
+                  <td class="px-6 py-4 text-[13px] font-bold text-[#0052CC]">
+                    TASK-{{ task.id.substring(0, 4) | uppercase }}
+                  </td>
+                  <td class="px-6 py-4 text-[14px] font-bold text-[#041B3C] w-1/3">{{ task.title }}</td>
+
+                  <td class="px-6 py-4">
+                    <span class="px-2.5 py-1 text-[10px] font-bold rounded uppercase tracking-widest"
+                          [ngClass]="getStatusBadge(task.status).bg + ' ' + getStatusBadge(task.status).text">
+                      {{ getStatusBadge(task.status).label }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-4 text-[13px] text-slate-600 font-medium">
+                    {{ task.due_date ? (task.due_date | date:'dd MMM yyyy') : '-' }}
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      @if (task.assignee) {
+                        <div
+                          class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
+                          [ngClass]="getAvatarColorClass(task.assignee.name)">
+                          {{ getInitials(task.assignee.name) }}
+                        </div>
+                        <span
+                          class="text-[13px] font-medium text-[#041B3C]">{{ task.assignee.name || task.assignee.email || "Unassigned" }}</span>
+                      } @else {
+                        <div
+                          class="w-7 h-7 rounded-full flex items-center justify-center bg-slate-100 text-slate-500 shadow-sm font-bold text-[10px]">
+                          ?
+                        </div>
+                        <span class="text-[13px] font-medium text-slate-400">Unassigned</span>
+                      }
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4 text-right">
+                    <button
+                      class="text-slate-300 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1.5"></circle>
+                        <circle cx="19" cy="12" r="1.5"></circle>
+                        <circle cx="5" cy="12" r="1.5"></circle>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        <div class="flex items-center justify-end px-6 py-4 border-t border-slate-100 bg-white">
+          <div class="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
+            <button class="text-slate-400 hover:text-[#041B3C] cursor-not-allowed">&lsaquo;</button>
+            <span>Page 1 of 5</span>
+            <button class="text-slate-400 hover:text-[#041B3C] cursor-pointer">&rsaquo;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Card Format -->
+      <div class="md:hidden flex flex-col gap-4">
+        @if (isListLoading) {
+          @for (i of [1, 2, 3]; track i) {
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 h-28 animate-pulse"></div>
+          }
+        } @else if (listError) {
+          <div class="text-center text-red-500 font-medium py-10">Failed to load tasks.</div>
+        } @else {
+          @for (task of listTasks; track task.id) {
+            <div
+              class="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100 flex flex-col gap-2 relative cursor-pointer active:bg-slate-50 transition-colors">
+
+              <div class="flex justify-between items-start">
+                <span
+                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TASK-{{ task.id.substring(0, 4) | uppercase }}</span>
+                <span class="px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-widest"
+                      [ngClass]="getStatusBadge(task.status).bg + ' ' + getStatusBadge(task.status).text">
+                  {{ getStatusBadge(task.status).label }}
+                </span>
+              </div>
+
+              <h3 class="text-[16px] font-bold text-[#041B3C] leading-snug pr-4 mb-2">{{ task.title }}</h3>
+
+              <div class="flex items-center gap-3">
+                @if (task.assignee) {
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
+                       [ngClass]="getAvatarColorClass(task.assignee.name)">
+                    {{ getInitials(task.assignee.name) }}
+                  </div>
+                } @else {
+                  <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 shadow-sm font-bold text-[10px]">
+                    ?
+                  </div>
+                }
+
+                <div class="flex flex-col">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Due Date</span>
+                  <span
+                    class="text-[13px] font-medium text-[#041B3C]">{{ task.due_date ? (task.due_date | date:'MMM dd, yyyy') : 'No Date' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+    </div>
+
+    <!-- Desktop Add Task FAB -->
+    <button [routerLink]="['/project', projectId, 'tasks', 'new']"
+            class="hidden md:flex fixed bottom-8 right-8 bg-[#0052CC] hover:bg-blue-800 text-white w-14 h-14 rounded-xl items-center justify-center shadow-lg shadow-blue-900/30 transition-transform active:scale-95 cursor-pointer z-50">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  }
 </div>

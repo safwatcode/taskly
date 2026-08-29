@@ -196,6 +196,32 @@ export class ProjectService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  // Fetch all tasks for the List View
+  getAllProjectTasks(projectId: string): Observable<PaginatedResponse<ProjectTaskResponse>> {
+    const params = new HttpParams()
+      .set('project_id', `eq.${projectId}`)
+      .set('order', 'created_at.desc');
+
+    return this.http
+      .get<ProjectTaskResponse[]>(this.projectTasksURL, {
+        params,
+        headers: { Prefer: 'count=exact' }, // Required to get total count
+        observe: 'response',
+      })
+      .pipe(
+        map((response: HttpResponse<ProjectTaskResponse[]>) => {
+          const contentRange = response.headers.get('Content-Range') || '0/0';
+          const totalCount = parseInt(contentRange.split('/')[1], 10) || 0;
+
+          return {
+            content: response.body || [],
+            totalElements: totalCount,
+          };
+        }),
+        catchError(this.handleError.bind(this)),
+      );
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 
