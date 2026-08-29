@@ -197,15 +197,22 @@ export class ProjectService {
   }
 
   // Fetch all tasks for the List View
-  getAllProjectTasks(projectId: string): Observable<PaginatedResponse<ProjectTaskResponse>> {
+  // The function accepts limit and offset for List View Pagination
+  getAllProjectTasks(
+    projectId: string,
+    limit = 5,
+    offset = 0,
+  ): Observable<PaginatedResponse<ProjectTaskResponse>> {
     const params = new HttpParams()
       .set('project_id', `eq.${projectId}`)
-      .set('order', 'created_at.desc');
+      .set('order', 'created_at.desc')
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
 
     return this.http
       .get<ProjectTaskResponse[]>(this.projectTasksURL, {
         params,
-        headers: { Prefer: 'count=exact' }, // Required to get total count
+        headers: { Prefer: 'count=exact' },
         observe: 'response',
       })
       .pipe(
@@ -221,7 +228,6 @@ export class ProjectService {
         catchError(this.handleError.bind(this)),
       );
   }
-
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
 

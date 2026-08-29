@@ -297,19 +297,19 @@
   } @else {
 
     <!-- List view -->
-    <div
-      class="flex-1 overflow-y-auto mt-2 md:mt-4 md:pb-4 custom-scrollbar pr-1 md:pr-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+    <div (scroll)="onListScroll($event)"
+         class="flex-1 overflow-y-auto md:pb-4 custom-scrollbar pr-1 md:pr-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
 
-      <!-- Table Format -->
+      <!-- Desktop Table Format -->
       <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <table class="w-full text-left border-collapse">
           <thead>
           <tr class="border-b border-slate-100 bg-[#F8FAFC]">
-            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Task ID</th>
-            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Title</th>
-            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
-            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Due Date</th>
-            <th class="px-6 py-4  text-xs font-bold text-slate-400 uppercase tracking-widest">Assignee</th>
+            <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Task ID</th>
+            <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Title</th>
+            <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+            <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Due Date</th>
+            <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Assignee</th>
             <th class="px-6 py-4"></th>
           </tr>
           </thead>
@@ -383,17 +383,38 @@
           </tbody>
         </table>
 
-        <div class="flex items-center justify-end px-6 py-4 border-t border-slate-100 bg-white">
-          <div class="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
-            <button class="text-slate-400 hover:text-[#041B3C] cursor-not-allowed">&lsaquo;</button>
-            <span>Page 1 of 5</span>
-            <button class="text-slate-400 hover:text-[#041B3C] cursor-pointer">&rsaquo;</button>
+        <!-- Desktop Pagination Footer -->
+        @if (!isListLoading && !listError && listTotalItems > 0) {
+          <div class="flex items-center justify-end px-6 py-4 border-t border-slate-100 bg-white">
+            <div class="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
+
+              <button (click)="prevListPage()"
+                      [disabled]="listCurrentPage === 1"
+                      class="text-slate-400 hover:text-[#041B3C] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center p-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+
+              <span class="select-none">Page {{ listCurrentPage }} of {{ listTotalPages }}</span>
+
+              <button (click)="nextListPage()"
+                      [disabled]="listCurrentPage === listTotalPages"
+                      class="text-slate-400 hover:text-[#041B3C] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center p-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+
+            </div>
           </div>
-        </div>
+        }
       </div>
 
       <!-- Mobile Card Format -->
-      <div class="md:hidden flex flex-col gap-4">
+      <div class="md:hidden flex flex-col gap-4 pb-20">
         @if (isListLoading) {
           @for (i of [1, 2, 3]; track i) {
             <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 h-28 animate-pulse"></div>
@@ -401,6 +422,8 @@
         } @else if (listError) {
           <div class="text-center text-red-500 font-medium py-10">Failed to load tasks.</div>
         } @else {
+
+          <!-- Tasks -->
           @for (task of listTasks; track task.id) {
             <div
               class="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100 flex flex-col gap-2 relative cursor-pointer active:bg-slate-50 transition-colors">
@@ -437,6 +460,13 @@
               </div>
             </div>
           }
+
+          <!-- Infinite Scroll Loading Spinner -->
+          @if (isListLoadingMore) {
+            <div class="flex justify-center items-center py-4">
+              <div class="w-6 h-6 border-2 border-slate-200 border-t-[#003D9B] rounded-full animate-spin"></div>
+            </div>
+          }
         }
       </div>
 
@@ -444,12 +474,13 @@
 
     <!-- Desktop Add Task FAB -->
     <button [routerLink]="['/project', projectId, 'tasks', 'new']"
-            class="hidden md:flex fixed bottom-8 right-8 bg-[#0052CC] hover:bg-blue-800 text-white w-14 h-14 rounded-xl items-center justify-center shadow-lg shadow-blue-900/30 transition-transform active:scale-95 cursor-pointer z-50">
+            class="hidden md:flex fixed bottom-4 right-8 bg-[#0052CC] hover:bg-blue-800 text-white w-14 h-14 rounded-xl items-center justify-center shadow-lg shadow-blue-900/30 transition-transform active:scale-95 cursor-pointer z-50">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
     </button>
+
   }
 </div>

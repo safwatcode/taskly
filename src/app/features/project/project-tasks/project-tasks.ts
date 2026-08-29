@@ -60,6 +60,15 @@ export class ProjectTasks implements OnInit {
   isListLoading = true;
   listError = false;
 
+  // For Pagination
+  listCurrentPage = 1;
+  listPageSize = 5;
+  listTotalItems = 0;
+
+  // Tracking mobile state & infinite scroll loading
+  isMobileView = false;
+  isListLoadingMore = false;
+
   toastError: string | null = null;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -146,6 +155,10 @@ export class ProjectTasks implements OnInit {
     },
   ];
 
+  get listTotalPages(): number {
+    return Math.max(1, Math.ceil(this.listTotalItems / this.listPageSize));
+  }
+
   ngOnInit(): void {
     this.fetchAll();
   }
@@ -161,8 +174,9 @@ export class ProjectTasks implements OnInit {
       .subscribe(([params, qParams, breakpointState]) => {
         const newProjectId = params.get('projectId') || '';
         const viewParam = qParams.get('view');
-        // True if screen is < 768px
-        const isMobile = breakpointState.matches;
+
+        // Save the mobile state to the variable
+        this.isMobileView = breakpointState.matches;
 
         if (newProjectId && newProjectId !== this.projectId) {
           this.projectId = newProjectId;
@@ -170,16 +184,16 @@ export class ProjectTasks implements OnInit {
           this.fetchProjectName();
         }
 
-        // Force 'list' view on mobile. If desktop, respect URL parameter.
-        this.currentView = isMobile || viewParam === 'list' ? 'list' : 'board';
+        this.currentView = this.isMobileView || viewParam === 'list' ? 'list' : 'board';
 
         if (this.projectId) {
-          // Only trigger API calls if the project or view type actually changed
           if (
             this.lastFetchedProjectId !== this.projectId ||
             this.lastFetchedView !== this.currentView
           ) {
             if (this.currentView === 'list') {
+              this.listCurrentPage = 1;
+              // Initial fetch
               this.fetchListTasks();
             } else {
               this.loadAllColumnsIndependently();
@@ -206,27 +220,57 @@ export class ProjectTasks implements OnInit {
     });
   }
 
-  private fetchListTasks(): void {
-    this.isListLoading = true;
+  private fetchListTasks(append = false): void {
+    if (append) {
+      this.isListLoadingMore = true;
+    } else {
+      this.isListLoading = true;
+    }
     this.listError = false;
 
+    const limit = this.listPageSize;
+    const offset = (this.listCurrentPage - 1) * limit;
+
     this.projectService
-      .getAllProjectTasks(this.projectId)
+      .getAllProjectTasks(this.projectId, limit, offset)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          this.listTasks = response.content;
+          if (append) {
+            // Append new tasks to the existing array for infinite scroll
+            this.listTasks = [...this.listTasks, ...response.content];
+          } else {
+            // Replace array for classic desktop pagination
+            this.listTasks = response.content;
+          }
+          this.listTotalItems = response.totalElements;
           this.isListLoading = false;
+          this.isListLoadingMore = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.listError = true;
           this.isListLoading = false;
+          this.isListLoadingMore = false;
           this.cdr.detectChanges();
         },
       });
   }
+  onListScroll(event: Event): void {
+    // Infinite scroll behavior on mobile screens
+    if (!this.isMobileView || this.isListLoading || this.isListLoadingMore) return;
 
+    const target = event.target as HTMLElement;
+
+    // Check if the user has scrolled within 50px of the bottom
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
+
+    if (isNearBottom && this.listCurrentPage < this.listTotalPages) {
+      this.listCurrentPage++;
+      // Call with append = true
+      this.fetchListTasks(true);
+    }
+  }
   private fetchProjectName(): void {
     this.projectService
       .getProjectById(this.projectId)
@@ -315,6 +359,21 @@ export class ProjectTasks implements OnInit {
     return 'NORMAL';
   }
 
+  // Pagination Control
+  nextListPage(): void {
+    if (this.listCurrentPage < this.listTotalPages) {
+      this.listCurrentPage++;
+      this.fetchListTasks();
+    }
+  }
+
+  prevListPage(): void {
+    if (this.listCurrentPage > 1) {
+      this.listCurrentPage--;
+      this.fetchListTasks();
+    }
+  }
+  // UI Helpers
   getStatusBadge(status: string) {
     switch (status) {
       case 'TO_DO':
