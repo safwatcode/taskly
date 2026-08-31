@@ -1,13 +1,13 @@
 import {
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  EventEmitter,
   HostListener,
   inject,
-  Input,
+  input,
   OnInit,
-  Output,
+  output,
+  signal,
 } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
 import { Auth } from '../../../../core/auth/services/auth';
@@ -20,30 +20,64 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserProfileResponse } from '../../../../core/auth/models/user-profile.model';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-task-details-popup',
-  imports: [DatePipe, NgClass],
+  standalone: true,
+  imports: [DatePipe, NgClass, FormsModule, NgTemplateOutlet],
   templateUrl: './task-details-popup.html',
   styleUrl: './task-details-popup.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaskDetailsPopup implements OnInit {
-  @Input({ required: true }) taskId!: string;
-  @Input({ required: true }) projectId!: string;
-  @Output() closeDialog = new EventEmitter<void>();
+  taskId = input.required<string>();
+  projectId = input.required<string>();
+  closeDialog = output<void>();
+  taskUpdated = output<{ id: string; changes: Partial<ProjectTaskResponse> }>();
 
   private projectService = inject(ProjectService);
   private authService = inject(Auth);
   private destroyRef = inject(DestroyRef);
-  private cdr = inject(ChangeDetectorRef);
 
-  task: ProjectTaskResponse | null = null;
-  members: ProjectMemberResponse[] = [];
-  epicDetails: ProjectEpicResponse | null = null;
+  // Signal States
+  task = signal<ProjectTaskResponse | null>(null);
+  members = signal<ProjectMemberResponse[]>([]);
+  epics = signal<ProjectEpicResponse[]>([]);
+  epicDetails = signal<ProjectEpicResponse | null>(null);
 
-  isLoading = true;
-  errorMessage: string | null = null;
+  isLoading = signal(true);
+  errorMessage = signal<string | null>(null);
+
+  // UI Edit Toggles
+  isEditingTitle = signal(false);
+  isEditingDescription = signal(false);
+  isAssigneeDropdownOpen = signal(false);
+  isEpicDropdownOpen = signal(false);
+  isStatusDropdownOpen = signal(false);
+
+  // Draft Values
+  draftTitle = '';
+  draftDescription = '';
+  draftAssigneeId = '';
+  draftEpicId = '';
+  draftDueDate = '';
+
+  // Toast Error State
+  toastError = signal<string | null>(null);
+  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  statuses = [
+    'TO_DO',
+    'IN_PROGRESS',
+    'BLOCKED',
+    'IN_REVIEW',
+    'READY_FOR_QA',
+    'REOPENED',
+    'READY_FOR_PRODUCTION',
+    'DONE',
+  ];
 
   // For Close on ESC key
   @HostListener('document:keydown.escape')
@@ -51,19 +85,28 @@ export class TaskDetailsPopup implements OnInit {
     this.onClose();
   }
 
+  get minDate(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   ngOnInit(): void {
-    if (this.taskId && this.projectId) {
+    if (this.taskId() && this.projectId()) {
       this.fetchTaskDetails();
     }
   }
 
   private fetchTaskDetails(): void {
-    this.isLoading = true;
-    this.errorMessage = null;
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
 
     forkJoin({
-      taskData: this.projectService.getTaskDetails(this.projectId, this.taskId),
-      membersData: this.projectService.getProjectMembers(this.projectId),
+      taskData: this.projectService.getTaskDetails(this.projectId(), this.taskId()),
+      membersData: this.projectService.getProjectMembers(this.projectId()),
+      epicsData: this.projectService.getProjectEpics(this.projectId(), '', 100, 0),
       userProfile: this.authService.getUserProfile().pipe(catchError(() => of(null))),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -78,8 +121,7 @@ export class TaskDetailsPopup implements OnInit {
             activeUserEmail = res.email || res.user_metadata?.email || null;
           }
 
-          // Map members for accurate display
-          this.members = data.membersData.map((member) => {
+          const mappedMembers = data.membersData.map((member) => {
             if (
               member.email === activeUserEmail &&
               (!member.name || !member.name.trim()) &&
@@ -89,10 +131,10 @@ export class TaskDetailsPopup implements OnInit {
             }
             return member;
           });
+          this.members.set(mappedMembers);
+          this.epics.set(data.epicsData.content);
 
           const fetchedTask = { ...data.taskData };
-
-          // Map Assignee and Reporter (Created By)
           if (
             fetchedTask.assignee &&
             fetchedTask.assignee.email === activeUserEmail &&
@@ -102,7 +144,6 @@ export class TaskDetailsPopup implements OnInit {
             fetchedTask.assignee = { ...fetchedTask.assignee, name: activeUserName };
           }
 
-          // Assuming API returns created_by. Modify if it strictly returns reporter
           const taskAny = fetchedTask as any;
           if (
             taskAny.created_by &&
@@ -113,32 +154,239 @@ export class TaskDetailsPopup implements OnInit {
             taskAny.created_by = { ...taskAny.created_by, name: activeUserName };
           }
 
-          this.task = fetchedTask;
+          this.task.set(fetchedTask);
+          this.epicDetails.set(this.epics().find((e) => e.id === fetchedTask.epic_id) || null);
 
-          // If the task belongs to an epic, fetch the epic details!
-          if (this.task.epic_id) {
-            this.projectService
-              .getEpicDetails(this.projectId, this.task.epic_id)
-              .pipe(takeUntilDestroyed(this.destroyRef))
-              .subscribe({
-                next: (epic) => {
-                  this.epicDetails = epic;
-                  this.cdr.detectChanges();
-                },
-              });
+          // Initialize drafts
+          this.draftTitle = fetchedTask.title;
+          this.draftDescription = fetchedTask.description || '';
+          this.draftEpicId = fetchedTask.epic_id || '';
+          this.draftDueDate = fetchedTask.due_date ? fetchedTask.due_date.substring(0, 10) : '';
+
+          // Assignee Draft Initialization (To handle the Unassigned option)
+          let initialAssigneeId =
+            fetchedTask.assignee?.sub || (fetchedTask.assignee as any)?.user_id || '';
+
+          // If the backend didn't send the ID, find it using their email or name
+          if (!initialAssigneeId && fetchedTask.assignee) {
+            const matchedMember = this.members().find(
+              (m) =>
+                m.email === fetchedTask.assignee?.email || m.name === fetchedTask.assignee?.name,
+            );
+            if (matchedMember) {
+              initialAssigneeId =
+                (matchedMember as any).user_id ||
+                (matchedMember as any).sub ||
+                matchedMember.id ||
+                '';
+            }
           }
+          this.draftAssigneeId = initialAssigneeId;
 
-          this.isLoading = false;
-          this.cdr.detectChanges();
+          this.isLoading.set(false);
         },
         error: (err) => {
-          // Empty state vs Error state
-          this.errorMessage =
-            err.message === 'Task not found' ? 'Task not found' : 'Failed to load task details';
-          this.isLoading = false;
-          this.cdr.detectChanges();
+          this.errorMessage.set(
+            err.message === 'Task not found' ? 'Task not found' : 'Failed to load task details',
+          );
+          this.isLoading.set(false);
         },
       });
+  }
+
+  // Signal Updates
+
+  enableEdit(field: 'title' | 'description'): void {
+    if (field === 'title') {
+      this.isEditingTitle.set(true);
+      this.draftTitle = this.task()!.title;
+    } else {
+      this.isEditingDescription.set(true);
+      this.draftDescription = this.task()!.description || '';
+    }
+
+    // Give Angular time to render the @if block, then focus the visible input
+    setTimeout(() => {
+      const inputs = document.querySelectorAll(`[data-edit="${field}"]`);
+      inputs.forEach((el) => {
+        const htmlElement = el as HTMLElement;
+        // offsetParent is only null if the element is hidden (display: none)
+        if (htmlElement.offsetParent !== null) {
+          htmlElement.focus();
+        }
+      });
+    }, 0);
+  }
+
+  saveTitle(): void {
+    this.isEditingTitle.set(false);
+    const newTitle = this.draftTitle.trim();
+    const currentTask = this.task();
+    if (!currentTask || !newTitle || newTitle === currentTask.title) return;
+
+    const previousValue = currentTask.title;
+    this.task.update((t) => (t ? { ...t, title: newTitle } : t));
+
+    this.projectService.updateTask(currentTask.id, { title: newTitle }).subscribe({
+      next: () => this.taskUpdated.emit({ id: currentTask.id, changes: { title: newTitle } }),
+      error: () => {
+        this.task.update((t) => (t ? { ...t, title: previousValue } : t));
+        this.draftTitle = previousValue;
+        this.showToast('Failed to update task. Please try again.');
+      },
+    });
+  }
+
+  saveDescription(): void {
+    this.isEditingDescription.set(false);
+    const newDesc = this.draftDescription.trim();
+    const currentTask = this.task();
+    if (!currentTask || newDesc === (currentTask.description || '')) return;
+
+    const previousValue = currentTask.description;
+    this.task.update((t) => (t ? { ...t, description: newDesc } : t));
+
+    this.projectService
+      .updateTask(currentTask.id, { description: newDesc || (null as any) })
+      .subscribe({
+        next: () =>
+          this.taskUpdated.emit({
+            id: currentTask.id,
+            changes: { description: newDesc || undefined },
+          }),
+        error: () => {
+          this.task.update((t) => (t ? { ...t, description: previousValue } : t));
+          this.draftDescription = previousValue || '';
+          this.showToast('Failed to update task. Please try again.');
+        },
+      });
+  }
+
+
+  selectAssignee(memberId: string | null): void {
+    this.isAssigneeDropdownOpen.set(false);
+    const currentTask = this.task();
+    if (!currentTask) return;
+
+    // Check if it is currently assigned by looking at the object presence
+    const isCurrentlyAssigned =
+      !!currentTask.assignee && (!!currentTask.assignee.name || !!currentTask.assignee.email);
+    const wantsUnassigned = !memberId;
+
+    const currentAssigneeId =
+      currentTask.assignee?.sub || (currentTask.assignee as any)?.user_id || '';
+    const newAssigneeId = memberId || '';
+
+    // Cancel if nothing changed (Both unassigned)
+    if (!isCurrentlyAssigned && wantsUnassigned) return;
+
+    // Cancel if nothing changed (Both assigned to the SAME person, provided the ID exists)
+    if (
+      isCurrentlyAssigned &&
+      !wantsUnassigned &&
+      currentAssigneeId === newAssigneeId &&
+      currentAssigneeId !== ''
+    )
+      return;
+
+    this.draftAssigneeId = newAssigneeId;
+    const previousAssignee = currentTask.assignee;
+
+    // Construct the new assignee or set explicitly to null (Unassigned)
+    let newAssignee = null;
+    if (memberId) {
+      const selectedMember = this.members().find(
+        (m) => ((m as any).user_id || (m as any).sub || m.id) === memberId,
+      );
+      if (selectedMember) {
+        newAssignee = { sub: memberId, name: selectedMember.name, email: selectedMember.email };
+      }
+    }
+
+    this.task.update((t) => (t ? { ...t, assignee: newAssignee as any } : t));
+
+    // API Call
+    this.projectService
+      .updateTask(currentTask.id, { assignee_id: memberId || (null as any) })
+      .subscribe({
+        next: () =>
+          this.taskUpdated.emit({ id: currentTask.id, changes: { assignee: newAssignee as any } }),
+        error: () => {
+          // Rollback on failure
+          this.task.update((t) => (t ? { ...t, assignee: previousAssignee } : t));
+          this.draftAssigneeId = previousAssignee?.sub || (previousAssignee as any)?.user_id || '';
+          this.showToast('Failed to update task. Please try again.');
+        },
+      });
+  }
+  selectEpic(epicId: string | null): void {
+    this.isEpicDropdownOpen.set(false);
+    this.draftEpicId = epicId || '';
+    const currentTask = this.task();
+    if (!currentTask || (currentTask.epic_id || '') === this.draftEpicId) return;
+
+    const previousEpicId = currentTask.epic_id;
+    this.task.update((t) => (t ? { ...t, epic_id: epicId || undefined } : t));
+    this.epicDetails.set(this.epics().find((e) => e.id === epicId) || null);
+
+    this.projectService.updateTask(currentTask.id, { epic_id: epicId || (null as any) }).subscribe({
+      next: () =>
+        this.taskUpdated.emit({ id: currentTask.id, changes: { epic_id: epicId || undefined } }),
+      error: () => {
+        this.task.update((t) => (t ? { ...t, epic_id: previousEpicId } : t));
+        this.draftEpicId = previousEpicId || '';
+        this.epicDetails.set(this.epics().find((e) => e.id === previousEpicId) || null);
+        this.showToast('Failed to update task. Please try again.');
+      },
+    });
+  }
+
+  selectStatus(status: string): void {
+    this.isStatusDropdownOpen.set(false);
+    const currentTask = this.task();
+    if (!currentTask || currentTask.status === status) return;
+
+    const previousStatus = currentTask.status;
+    this.task.update((t) => (t ? { ...t, status } : t));
+
+    this.projectService.updateTask(currentTask.id, { status }).subscribe({
+      next: () => this.taskUpdated.emit({ id: currentTask.id, changes: { status } }),
+      error: () => {
+        this.task.update((t) => (t ? { ...t, status: previousStatus } : t));
+        this.showToast('Failed to update task. Please try again.');
+      },
+    });
+  }
+
+  saveDueDate(): void {
+    const newDeadline = this.draftDueDate;
+    const currentTask = this.task();
+    if (!currentTask || newDeadline === (currentTask.due_date?.substring(0, 10) || '')) return;
+
+    if (newDeadline && newDeadline < this.minDate) {
+      this.draftDueDate = currentTask.due_date?.substring(0, 10) || '';
+      this.showToast('Due date cannot be set in the past.');
+      return;
+    }
+
+    const previousValue = currentTask.due_date;
+    const isoDate = newDeadline ? new Date(newDeadline).toISOString() : (null as any);
+    this.task.update((t) => (t ? { ...t, due_date: isoDate } : t));
+
+    this.projectService.updateTask(currentTask.id, { due_date: isoDate }).subscribe({
+      next: () => this.taskUpdated.emit({ id: currentTask.id, changes: { due_date: isoDate } }),
+      error: () => {
+        this.task.update((t) => (t ? { ...t, due_date: previousValue } : t));
+        this.draftDueDate = previousValue?.substring(0, 10) || '';
+        this.showToast('Failed to update task. Please try again.');
+      },
+    });
+  }
+
+  private showToast(message: string): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastError.set(message);
+    this.toastTimeout = setTimeout(() => this.toastError.set(null), 4000);
   }
 
   onClose(): void {
@@ -146,13 +394,17 @@ export class TaskDetailsPopup implements OnInit {
   }
 
   copyLink(): void {
-    const url = `${window.location.origin}${window.location.pathname}?task=${this.taskId}`;
+    const url = `${window.location.origin}${window.location.pathname}?task=${this.taskId()}`;
     navigator.clipboard.writeText(url).then(() => {
       alert('Task link copied to the clipboard!');
     });
   }
 
-  // Colored Badge based on Value
+  formatStatus(status: string): string {
+    return status ? status.replace(/_/g, ' ') : '';
+  }
+
+  // UI Helpers
   getStatusConfig(status: string) {
     switch (status) {
       case 'DONE':
@@ -225,10 +477,9 @@ export class TaskDetailsPopup implements OnInit {
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';
     const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
+    return parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+      : name.substring(0, 2).toUpperCase();
   }
 
   getAvatarColorClass(name: string | null | undefined): string {
