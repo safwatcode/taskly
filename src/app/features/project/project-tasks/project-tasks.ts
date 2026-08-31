@@ -1,4 +1,12 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../services/project.service';
 import { ProjectContextService } from '../services/project-context.service';
@@ -7,6 +15,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
   CdkDrag,
   CdkDragDrop,
@@ -17,12 +27,11 @@ import {
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TaskDetailsPopup } from './task-details-popup/task-details-popup';
 
 @Component({
   selector: 'app-project-tasks',
+  standalone: true,
   imports: [
     RouterLink,
     NgClass,
@@ -32,14 +41,15 @@ import { TaskDetailsPopup } from './task-details-popup/task-details-popup';
     CdkDrag,
     CdkDragPlaceholder,
     NgTemplateOutlet,
-    UpperCasePipe,
-    CdkDragPreview,
     ReactiveFormsModule,
     TaskDetailsPopup,
+    UpperCasePipe,
+    CdkDragPreview,
   ],
   templateUrl: './project-tasks.html',
   styleUrl: './project-tasks.css',
   host: { class: 'flex flex-col flex-1 h-full overflow-hidden bg-slate-50' },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectTasks implements OnInit {
   private route = inject(ActivatedRoute);
@@ -47,42 +57,42 @@ export class ProjectTasks implements OnInit {
   private projectService = inject(ProjectService);
   private projectContext = inject(ProjectContextService);
   private breakpointObserver = inject(BreakpointObserver);
-  private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
-  projectId = '';
-  projectName = '';
-  selectedTaskId: string | null = null;
+  projectId = signal('');
+  projectName = signal('');
 
-  currentView: 'board' | 'list' = 'board';
-  // State custom View Switcher dropdown
-  isViewDropdownOpen = false;
+  currentView = signal<'board' | 'list'>('board');
+  isViewDropdownOpen = signal(false);
 
-  // Tracking variables to prevent redundant API calls during resize
   private lastFetchedView: 'board' | 'list' | null = null;
   private lastFetchedProjectId: string | null = null;
 
-  listTasks: ProjectTaskResponse[] = [];
-  isListLoading = true;
-  listError = false;
-
-  // For Pagination
-  listCurrentPage = 1;
-  listPageSize = 5;
-  listTotalItems = 0;
-
-  // Tracking mobile state & infinite scroll loading
-  isMobileView = false;
-  isListLoadingMore = false;
-  listLoadingMoreError = false;
-
-  // Search Control
   searchControl = new FormControl('');
 
-  toastError: string | null = null;
+  // Signals for list view
+  listTasks = signal<ProjectTaskResponse[]>([]);
+  isListLoading = signal(true);
+  listError = signal(false);
+
+  listCurrentPage = signal(1);
+  listPageSize = signal(5);
+  listTotalItems = signal(0);
+  listTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.listTotalItems() / this.listPageSize())),
+  );
+
+  isMobileView = signal(false);
+  isListLoadingMore = signal(false);
+  listLoadingMoreError = signal(false);
+
+  toastError = signal<string | null>(null);
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  boardColumns: BoardColumn[] = [
+  selectedTaskId = signal<string | null>(null);
+
+  // Signals for Board view
+  boardColumns = signal<BoardColumn[]>([
     {
       id: 'TO_DO',
       label: 'TO DO',
@@ -107,7 +117,7 @@ export class ProjectTasks implements OnInit {
       id: 'BLOCKED',
       label: 'BLOCKED',
       dotClass: 'bg-[#BA1A1A]',
-      borderClass: 'border-none',
+      borderClass: 'border border-red-200',
       bgClass: 'bg-[#FFF4F4]',
       tasks: [],
       isLoading: true,
@@ -163,18 +173,13 @@ export class ProjectTasks implements OnInit {
       isLoading: true,
       error: false,
     },
-  ];
-
-  get listTotalPages(): number {
-    return Math.max(1, Math.ceil(this.listTotalItems / this.listPageSize));
-  }
+  ]);
 
   ngOnInit(): void {
-    this.fetchAll();
+    this.fetchTasks();
   }
 
-  private fetchAll(): void {
-    // Listen to URL params and screen size concurrently
+  private fetchTasks(): void {
     combineLatest([
       this.route.paramMap,
       this.route.queryParamMap,
@@ -184,41 +189,83 @@ export class ProjectTasks implements OnInit {
       .subscribe(([params, qParams, breakpointState]) => {
         const newProjectId = params.get('projectId') || '';
         const viewParam = qParams.get('view');
-        this.isMobileView = breakpointState.matches;
+        this.isMobileView.set(breakpointState.matches);
 
-        if (newProjectId && newProjectId !== this.projectId) {
-          this.projectId = newProjectId;
-          this.projectContext.setProjectId(this.projectId);
+        if (newProjectId && newProjectId !== this.projectId()) {
+          this.projectId.set(newProjectId);
+          this.projectContext.setProjectId(newProjectId);
           this.fetchProjectName();
-          this.searchControl.setValue('', { emitEvent: false }); // Reset search on project switch
+          this.searchControl.setValue('', { emitEvent: false });
         }
 
-        this.currentView = this.isMobileView || viewParam === 'list' ? 'list' : 'board';
+        this.currentView.set(this.isMobileView() || viewParam === 'list' ? 'list' : 'board');
 
-        if (this.projectId) {
+        if (this.projectId()) {
           if (
-            this.lastFetchedProjectId !== this.projectId ||
-            this.lastFetchedView !== this.currentView
+            this.lastFetchedProjectId !== this.projectId() ||
+            this.lastFetchedView !== this.currentView()
           ) {
             this.executeActiveViewFetch();
-            this.lastFetchedProjectId = this.projectId;
-            this.lastFetchedView = this.currentView;
+            this.lastFetchedProjectId = this.projectId();
+            this.lastFetchedView = this.currentView();
           }
         }
       });
 
-    // Search Debounce Listener
     this.searchControl.valueChanges
       .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.executeActiveViewFetch();
-      });
+      .subscribe(() => this.executeActiveViewFetch());
   }
 
-  // Wrapper function to trigger fetches and reset limits/offsets
+  onTaskUpdated(payload: { id: string; changes: Partial<ProjectTaskResponse> }): void {
+    // Update List View Data
+    this.listTasks.update((tasks) =>
+      tasks.map((t) => (t.id === payload.id ? { ...t, ...payload.changes } : t)),
+    );
+
+    // Update Board Columns Data
+    this.boardColumns.update((cols) => {
+      // Clone all tasks to ensure Signal change detection works correctly
+      const updatedCols = cols.map((c) => ({ ...c, tasks: [...c.tasks] }));
+      let currentColIndex = -1;
+      let taskIndex = -1;
+
+      for (let i = 0; i < updatedCols.length; i++) {
+        taskIndex = updatedCols[i].tasks.findIndex((t) => t.id === payload.id);
+        if (taskIndex > -1) {
+          currentColIndex = i;
+          break;
+        }
+      }
+
+      if (currentColIndex > -1 && taskIndex > -1) {
+        const existingTask = updatedCols[currentColIndex].tasks[taskIndex];
+        const updatedTask = { ...existingTask, ...payload.changes };
+
+        // Handle Status Move if necessary
+        if (payload.changes.status && payload.changes.status !== existingTask.status) {
+          updatedCols[currentColIndex].tasks.splice(taskIndex, 1); // Remove from old
+          const newCol = updatedCols.find((c) => c.id === payload.changes.status);
+          if (newCol) newCol.tasks.unshift(updatedTask); // Prepend to new column
+        } else {
+          updatedCols[currentColIndex].tasks[taskIndex] = updatedTask; // In-place update
+        }
+      }
+      return updatedCols;
+    });
+  }
+
+  openTaskDetails(taskId: string): void {
+    this.selectedTaskId.set(taskId);
+  }
+
+  closeTaskDetails(): void {
+    this.selectedTaskId.set(null);
+  }
+
   private executeActiveViewFetch(): void {
-    if (this.currentView === 'list') {
-      this.listCurrentPage = 1;
+    if (this.currentView() === 'list') {
+      this.listCurrentPage.set(1);
       this.fetchListTasks();
     } else {
       this.loadAllColumnsIndependently();
@@ -226,11 +273,8 @@ export class ProjectTasks implements OnInit {
   }
 
   switchView(view: 'board' | 'list'): void {
-    // Close dropdown on selection
-    this.isViewDropdownOpen = false;
-
-    // Don't navigate if they click the view they are already on
-    if (this.currentView === view) return;
+    this.isViewDropdownOpen.set(false);
+    if (this.currentView() === view) return;
 
     this.router.navigate([], {
       relativeTo: this.route,
@@ -239,87 +283,100 @@ export class ProjectTasks implements OnInit {
     });
   }
 
+  private fetchProjectName(): void {
+    this.projectService
+      .getProjectById(this.projectId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((project) => this.projectName.set(project.name));
+  }
+
   protected fetchListTasks(append = false): void {
     if (append) {
-      this.isListLoadingMore = true;
-      this.listLoadingMoreError = false;
+      this.isListLoadingMore.set(true);
+      this.listLoadingMoreError.set(false);
     } else {
-      // Providing full loader when changing page
-      this.isListLoading = true;
+      this.isListLoading.set(true);
     }
-    this.listError = false;
+    this.listError.set(false);
 
-    const limit = this.listPageSize;
-    const offset = (this.listCurrentPage - 1) * limit;
+    const limit = this.listPageSize();
+    const offset = (this.listCurrentPage() - 1) * limit;
 
     this.projectService
-      .getAllProjectTasks(this.projectId, limit, offset, this.searchControl.value || '')
+      .getAllProjectTasks(this.projectId(), limit, offset, this.searchControl.value || '')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           if (append) {
-            this.listTasks = [...this.listTasks, ...response.content];
+            this.listTasks.update((prev) => [...prev, ...response.content]);
           } else {
-            this.listTasks = response.content;
+            this.listTasks.set(response.content);
           }
-          this.listTotalItems = response.totalElements;
-          this.isListLoading = false;
-          this.isListLoadingMore = false;
-          this.cdr.detectChanges();
+          this.listTotalItems.set(response.totalElements);
+          this.isListLoading.set(false);
+          this.isListLoadingMore.set(false);
         },
         error: () => {
           if (append) {
-            this.listLoadingMoreError = true;
-            this.listCurrentPage--; // Rollback page if failure
+            this.listLoadingMoreError.set(true);
+            this.listCurrentPage.update((p) => p - 1);
           } else {
-            this.listError = true;
+            this.listError.set(true);
           }
-          this.isListLoading = false;
-          this.isListLoadingMore = false;
-          this.cdr.detectChanges();
+          this.isListLoading.set(false);
+          this.isListLoadingMore.set(false);
         },
       });
   }
 
+  nextListPage(): void {
+    if (this.listCurrentPage() < this.listTotalPages()) {
+      this.listCurrentPage.update((p) => p + 1);
+      this.fetchListTasks();
+    }
+  }
+
+  prevListPage(): void {
+    if (this.listCurrentPage() > 1) {
+      this.listCurrentPage.update((p) => p - 1);
+      this.fetchListTasks();
+    }
+  }
+
   onListScroll(event: Event): void {
-    // Infinite scroll behavior on mobile screens
-    if (!this.isMobileView || this.isListLoading || this.isListLoadingMore) return;
+    if (
+      !this.isMobileView() ||
+      this.isListLoading() ||
+      this.isListLoadingMore() ||
+      this.listLoadingMoreError()
+    )
+      return;
 
     const target = event.target as HTMLElement;
-
-    // Check if the user has scrolled within 50px of the bottom
     const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
 
-    if (isNearBottom && this.listCurrentPage < this.listTotalPages) {
-      this.listCurrentPage++;
-      // Call with append = true
+    if (isNearBottom && this.listCurrentPage() < this.listTotalPages()) {
+      this.listCurrentPage.update((p) => p + 1);
       this.fetchListTasks(true);
     }
   }
 
-  private fetchProjectName(): void {
-    this.projectService
-      .getProjectById(this.projectId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((project) => {
-        this.projectName = project.name;
-        this.cdr.detectChanges();
-      });
-  }
-
   private loadAllColumnsIndependently(): void {
-    this.boardColumns.forEach((column) => {
-      column.isLoading = true;
-      column.error = false;
+    this.boardColumns.update((cols) => {
+      cols.forEach((c) => {
+        c.isLoading = true;
+        c.error = false;
+        c.offset = 0;
+        c.hasMore = true;
+        c.loadingMoreError = false;
+      });
+      return [...cols];
+    });
 
-      // Reset infinite scroll state per column
-      column.offset = 0;
-      column.hasMore = true;
-      column.loadingMoreError = false;
-
+    this.boardColumns().forEach((column) => {
       this.projectService
         .getProjectTasksByStatus(
-          this.projectId,
+          this.projectId(),
           column.id,
           10,
           column.offset,
@@ -328,21 +385,28 @@ export class ProjectTasks implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (tasks) => {
-            column.tasks = tasks || [];
-            if (tasks.length < 10) column.hasMore = false;
-            column.isLoading = false;
-            this.cdr.detectChanges();
+            this.boardColumns.update((cols) => {
+              const target = cols.find((c) => c.id === column.id)!;
+              target.tasks = tasks || [];
+              if (tasks.length < 10) target.hasMore = false;
+              target.isLoading = false;
+              return [...cols];
+            });
           },
           error: () => {
-            column.error = true;
-            column.isLoading = false;
-            this.cdr.detectChanges();
+            this.boardColumns.update((cols) => {
+              const target = cols.find((c) => c.id === column.id)!;
+              target.error = true;
+              target.isLoading = false;
+              return [...cols];
+            });
           },
         });
     });
   }
 
-  onBoardColumnScroll(event: Event, col: BoardColumn): void {
+  onBoardColumnScroll(event: Event, colId: string): void {
+    const col = this.boardColumns().find((c) => c.id === colId)!;
     if (col.isLoading || col.isFetchingMore || !col.hasMore || col.loadingMoreError) return;
 
     const target = event.target as HTMLElement;
@@ -353,36 +417,48 @@ export class ProjectTasks implements OnInit {
     }
   }
 
-  // Handle appending new tasks to specific columns via scroll
   loadMoreTasksForColumn(col: BoardColumn): void {
-    col.isFetchingMore = true;
-    col.loadingMoreError = false;
-    col.offset! += 10;
+    this.boardColumns.update((cols) => {
+      const target = cols.find((c) => c.id === col.id)!;
+      target.isFetchingMore = true;
+      target.loadingMoreError = false;
+      target.offset! += 10;
+      return [...cols];
+    });
+
+    const updatedCol = this.boardColumns().find((c) => c.id === col.id)!;
 
     this.projectService
       .getProjectTasksByStatus(
-        this.projectId,
+        this.projectId(),
         col.id,
         10,
-        col.offset,
+        updatedCol.offset,
         this.searchControl.value || '',
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (tasks) => {
-          col.tasks = [...col.tasks, ...tasks];
-          if (tasks.length < 10) col.hasMore = false;
-          col.isFetchingMore = false;
-          this.cdr.detectChanges();
+          this.boardColumns.update((cols) => {
+            const target = cols.find((c) => c.id === col.id)!;
+            target.tasks = [...target.tasks, ...tasks];
+            if (tasks.length < 10) target.hasMore = false;
+            target.isFetchingMore = false;
+            return [...cols];
+          });
         },
         error: () => {
-          col.loadingMoreError = true;
-          col.isFetchingMore = false;
-          col.offset! -= 10; // Rollback offset
-          this.cdr.detectChanges();
+          this.boardColumns.update((cols) => {
+            const target = cols.find((c) => c.id === col.id)!;
+            target.loadingMoreError = true;
+            target.isFetchingMore = false;
+            target.offset! -= 10;
+            return [...cols];
+          });
         },
       });
   }
+
   drop(event: CdkDragDrop<ProjectTaskResponse[]>, newStatus: string): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
@@ -390,6 +466,7 @@ export class ProjectTasks implements OnInit {
       const taskToMove = event.previousContainer.data[event.previousIndex];
       const previousStatus = taskToMove.status;
 
+      // Drag update
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -400,7 +477,7 @@ export class ProjectTasks implements OnInit {
 
       this.projectService.updateTask(taskToMove.id, { status: newStatus }).subscribe({
         next: () => {
-          // Success! The UI is already updated.
+          //   UI updated successfully
         },
         error: () => {
           transferArrayItem(
@@ -411,10 +488,15 @@ export class ProjectTasks implements OnInit {
           );
           taskToMove.status = previousStatus;
           this.showToast('Failed to move task. Please check your connection.');
-          this.cdr.detectChanges();
         },
       });
     }
+  }
+
+  private showToast(message: string): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastError.set(message);
+    this.toastTimeout = setTimeout(() => this.toastError.set(null), 4000);
   }
 
   getTaskDateState(dateString: string | null | undefined): 'TODAY' | 'DELAYED' | 'NORMAL' {
@@ -426,40 +508,6 @@ export class ProjectTasks implements OnInit {
     if (due.getTime() < today.getTime()) return 'DELAYED';
     if (due.getTime() === today.getTime()) return 'TODAY';
     return 'NORMAL';
-  }
-
-  openTaskDetails(taskId: string): void {
-    this.selectedTaskId = taskId;
-  }
-
-  closeTaskDetails(): void {
-    this.selectedTaskId = null;
-  }
-
-  // Pagination Control
-  nextListPage(): void {
-    if (this.listCurrentPage < this.listTotalPages) {
-      this.listCurrentPage++;
-      this.fetchListTasks();
-    }
-  }
-
-  prevListPage(): void {
-    if (this.listCurrentPage > 1) {
-      this.listCurrentPage--;
-      this.fetchListTasks();
-    }
-  }
-
-  // UI Helpers
-  private showToast(message: string): void {
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastError = message;
-    this.cdr.detectChanges();
-    this.toastTimeout = setTimeout(() => {
-      this.toastError = null;
-      this.cdr.detectChanges();
-    }, 4000);
   }
 
   getStatusBadge(status: string) {
@@ -488,10 +536,9 @@ export class ProjectTasks implements OnInit {
   getInitials(name: string | null | undefined): string {
     if (!name || !name.trim()) return 'N/A';
     const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
+    return parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+      : name.substring(0, 2).toUpperCase();
   }
 
   getAvatarColorClass(name: string | null | undefined): string {

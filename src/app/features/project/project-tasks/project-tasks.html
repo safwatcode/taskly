@@ -1,7 +1,7 @@
 <div class="flex flex-col flex-1 h-full p-4 md:p-6 bg-slate-50 overflow-hidden min-w-0 relative">
 
   <!-- Toast Error Notification -->
-  @if (toastError) {
+  @if (toastError()) {
     <div
       class="absolute top-6 right-6 bg-[#BA1A1A] text-white px-5 py-3.5 rounded-lg shadow-lg shadow-red-900/20 z-100 animate-fade-in-up flex items-center gap-3 font-medium text-sm">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -10,16 +10,18 @@
         <line x1="12" y1="8" x2="12" y2="12"></line>
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
-      {{ toastError }}
+      {{ toastError() }}
     </div>
   }
 
   <!-- Task Details Popup Overlay -->
-  @if (selectedTaskId) {
+  @if (selectedTaskId()) {
     <app-task-details-popup
-      [taskId]="selectedTaskId"
-      [projectId]="projectId"
-      (closeDialog)="closeTaskDetails()">
+      [taskId]="selectedTaskId()!"
+      [projectId]="projectId()"
+      (closeDialog)="closeTaskDetails()"
+      (taskUpdated)="onTaskUpdated($event)"
+    >
     </app-task-details-popup>
   }
 
@@ -28,7 +30,7 @@
     <div class="hidden md:flex text-xs font-bold text-slate-400 mb-2 tracking-widest uppercase items-center gap-2">
       <a routerLink="/project" class="hover:text-[#003D9B] transition-colors cursor-pointer">PROJECTS</a>
       <span>&rsaquo;</span>
-      <span class="truncate max-w-37.5">{{ projectName || '...' }}</span>
+      <span class="truncate max-w-37.5">{{ projectName() || '...' }}</span>
       <span>&rsaquo;</span>
       <span class="text-[#003D9B]">Tasks</span>
     </div>
@@ -57,14 +59,14 @@
         <!-- Desktop View Switcher (Hidden on Mobile) -->
         <div class="relative hidden md:block z-50">
           <div
-            (click)="isViewDropdownOpen = !isViewDropdownOpen"
+            (click)="isViewDropdownOpen.set(!isViewDropdownOpen())"
             class="flex items-center justify-between bg-white border border-slate-200 text-[#041B3C] text-[13px] font-bold rounded-lg pl-10 pr-4 py-2.5 outline-none hover:bg-slate-50 cursor-pointer min-w-37.5 transition-all"
-            [ngClass]="isViewDropdownOpen ? 'border-[#003D9B]/50 ring-2 ring-[#003D9B]/20' : ''">
+            [ngClass]="isViewDropdownOpen() ? 'border-[#003D9B]/50 ring-2 ring-[#003D9B]/20' : ''">
 
             <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" width="16" height="16"
                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                  stroke-linejoin="round">
-              @if (currentView === 'board') {
+              @if (currentView() === 'board') {
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
@@ -79,21 +81,21 @@
               }
             </svg>
 
-            <span>{{ currentView === 'board' ? 'Board View' : 'List View' }}</span>
+            <span>{{ currentView() === 'board' ? 'Board View' : 'List View' }}</span>
 
             <svg class="text-slate-400 ml-3 transition-transform duration-200 shrink-0"
-                 [ngClass]="isViewDropdownOpen ? 'rotate-180' : ''" width="16" height="16" viewBox="0 0 24 24"
+                 [ngClass]="isViewDropdownOpen() ? 'rotate-180' : ''" width="16" height="16" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
 
-          @if (isViewDropdownOpen) {
+          @if (isViewDropdownOpen()) {
             <div
-              class="fixed inset-0 z-40" (click)="isViewDropdownOpen = false"></div>
+              class="fixed inset-0 z-40" (click)="isViewDropdownOpen.set(false)"></div>
           }
 
-          @if (isViewDropdownOpen) {
+          @if (isViewDropdownOpen()) {
             <div
               class="absolute top-[calc(100%+4px)] right-0 w-full min-w-40 bg-white border border-slate-100 rounded-lg shadow-sm z-50 py-1.5 animate-fade-in-up origin-top">
               <div
@@ -111,7 +113,7 @@
                   </svg>
                   <span>Board View</span>
                 </div>
-                @if (currentView === 'board') {
+                @if (currentView() === 'board') {
                   <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-2" width="16" height="16"
                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                        stroke-linejoin="round">
@@ -138,7 +140,7 @@
                   </svg>
                   <span>List View</span>
                 </div>
-                @if (currentView === 'list') {
+                @if (currentView() === 'list') {
                   <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-2" width="16" height="16"
                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                        stroke-linejoin="round">
@@ -152,7 +154,7 @@
 
         <button
           class="md:hidden w-full bg-[#0052CC] hover:bg-blue-800 transition-colors text-white py-2.5 rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5"
-          [routerLink]="['/project', projectId, 'tasks', 'new']">
+          [routerLink]="['/project', projectId(), 'tasks', 'new']">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -217,14 +219,14 @@
 
   <!-- Board and List views -->
 
-  @if (currentView === 'board') {
+  @if (currentView() === 'board') {
 
     <!-- Board View -->
     <div
       class="hidden md:block flex-1 overflow-x-auto overflow-y-hidden pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-slate-200/50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
       <div class="flex gap-6 h-full items-start w-max px-1 pb-2" cdkDropListGroup>
 
-        @for (col of boardColumns; track col.id) {
+        @for (col of boardColumns(); track col.id) {
           <div class="w-[320px] flex flex-col max-h-full">
             <div class="flex items-center justify-between mb-4 px-1 shrink-0">
               <div class="flex items-center gap-2">
@@ -235,7 +237,7 @@
                     class="bg-[#E8EDF9] text-[#0052CC] text-[10px] font-bold px-2 py-0.5 rounded ml-1">{{ col.tasks.length }}</span>
                 }
               </div>
-              <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
+              <button [routerLink]="['/project', projectId(), 'tasks', 'new']" [queryParams]="{status: col.id}"
                       class="text-slate-400 hover:text-[#0052CC] hover:bg-[#E8EDF9] w-6 h-6 rounded flex items-center justify-center transition-colors cursor-pointer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -246,7 +248,7 @@
             </div>
 
             <div cdkDropList [cdkDropListData]="col.tasks" (cdkDropListDropped)="drop($event, col.id)"
-                 (scroll)="onBoardColumnScroll($event, col)"
+                 (scroll)="onBoardColumnScroll($event, col.id)"
                  class="flex-1 overflow-y-auto pr-2 pb-2 flex flex-col gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200/80 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full min-h-37.5">
 
               @if (col.isLoading) {
@@ -260,7 +262,7 @@
                   {{ searchControl.value ? 'Failed to search tasks' : 'Failed to load tasks' }}
                 </div>
               } @else {
-                <button [routerLink]="['/project', projectId, 'tasks', 'new']" [queryParams]="{status: col.id}"
+                <button [routerLink]="['/project', projectId(), 'tasks', 'new']" [queryParams]="{status: col.id}"
                         class="w-full border-2 border-dashed border-slate-200 rounded-lg py-3 flex justify-center items-center gap-2 text-slate-400 hover:text-slate-600 hover:bg-white hover:border-slate-300 transition-all font-bold text-[11px] tracking-widest uppercase cursor-pointer mb-1 shadow-sm shrink-0">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -327,7 +329,7 @@
           </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            @if (isListLoading) {
+            @if (isListLoading()) {
               @for (i of [1, 2, 3, 4, 5]; track i) {
                 <tr>
                   <td colspan="6" class="px-6 py-5">
@@ -335,13 +337,13 @@
                   </td>
                 </tr>
               }
-            } @else if (listError) {
+            } @else if (listError()) {
               <tr>
                 <td colspan="6" class="px-6 py-10 text-center text-red-500 font-medium">
                   {{ searchControl.value ? 'Failed to search tasks' : 'Failed to load tasks' }}
                 </td>
               </tr>
-            } @else if (listTasks.length === 0) {
+            } @else if (listTasks().length === 0) {
               <!-- Empty Search states for Desktop List -->
               <tr>
                 <td colspan="6" class="px-6 py-16 text-center">
@@ -351,7 +353,7 @@
                 </td>
               </tr>
             } @else {
-              @for (task of listTasks; track task.id) {
+              @for (task of listTasks(); track task.id) {
                 <tr class="hover:bg-slate-50 transition-colors group cursor-pointer" (click)="openTaskDetails(task.id)">
                   <td class="px-6 py-4 text-[13px] font-bold text-[#0052CC]">
                     {{ task.task_id }}
@@ -403,18 +405,18 @@
         </table>
 
         <!-- Desktop Pagination-->
-        @if (!isListLoading && !listError && listTotalItems > 0) {
+        @if (!isListLoading() && !listError() && listTotalItems() > 0) {
           <div class="flex items-center justify-end px-6 py-4 border-t border-slate-100 bg-white">
             <div class="flex items-center gap-4 text-[13px] text-slate-500 font-medium">
-              <button (click)="prevListPage()" [disabled]="listCurrentPage === 1"
+              <button (click)="prevListPage()" [disabled]="listCurrentPage() === 1"
                       class="text-slate-400 hover:text-[#041B3C] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center p-1">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <span class="select-none">Page {{ listCurrentPage }} of {{ listTotalPages }}</span>
-              <button (click)="nextListPage()" [disabled]="listCurrentPage === listTotalPages"
+              <span class="select-none">Page {{ listCurrentPage() }} of {{ listTotalPages() }}</span>
+              <button (click)="nextListPage()" [disabled]="listCurrentPage() === listTotalPages()"
                       class="text-slate-400 hover:text-[#041B3C] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center p-1">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -428,15 +430,15 @@
 
       <!-- Mobile Card Format -->
       <div class="md:hidden flex flex-col gap-4 pb-4">
-        @if (isListLoading) {
+        @if (isListLoading()) {
           @for (i of [1, 2, 3]; track i) {
             <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 h-28 animate-pulse"></div>
           }
-        } @else if (listError) {
+        } @else if (listError()) {
           <div class="text-center text-red-500 font-medium py-10">
             {{ searchControl.value ? 'Failed to search tasks' : 'Failed to load tasks' }}
           </div>
-        } @else if (listTasks.length === 0) {
+        } @else if (listTasks().length === 0) {
           <!-- Empty Search states for Mobile List -->
           <div
             class="border-2 border-dashed border-slate-200 bg-[#F8FAFC] rounded-xl p-8 flex flex-col items-center justify-center text-center mt-4">
@@ -452,7 +454,7 @@
             </p>
           </div>
         } @else {
-          @for (task of listTasks; track task.id) {
+          @for (task of listTasks(); track task.id) {
             <div
               (click)="openTaskDetails(task.id)"
               class="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100 flex flex-col gap-2 relative cursor-pointer active:bg-slate-50 transition-colors">
@@ -487,12 +489,12 @@
           }
 
           <!-- Mobile infinite Scroll Bottom Loader and Retry Action -->
-          @if (isListLoadingMore) {
+          @if (isListLoadingMore()) {
             <div class="flex justify-center items-center py-4">
               <div class="w-6 h-6 border-2 border-slate-200 border-t-[#003D9B] rounded-full animate-spin"></div>
             </div>
           }
-          @if (listLoadingMoreError) {
+          @if (listLoadingMoreError()) {
             <div class="py-4 text-center">
               <span class="text-sm text-red-500 font-medium">Failed to load more</span>
               <button (click)="fetchListTasks(true)"
@@ -507,7 +509,7 @@
     </div>
 
     <!-- Desktop Add Task FAB -->
-    <button [routerLink]="['/project', projectId, 'tasks', 'new']"
+    <button [routerLink]="['/project', projectId(), 'tasks', 'new']"
             class="hidden md:flex fixed bottom-4 right-8 bg-[#0052CC] hover:bg-blue-800 text-white w-14 h-14 rounded-xl items-center justify-center shadow-lg shadow-blue-900/30 transition-transform active:scale-95 cursor-pointer z-50">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round">
