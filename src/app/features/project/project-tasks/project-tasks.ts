@@ -177,6 +177,7 @@ export class ProjectTasks implements OnInit {
 
   ngOnInit(): void {
     this.fetchTasks();
+    this.initializeDeepLinking();
   }
 
   private fetchTasks(): void {
@@ -261,6 +262,13 @@ export class ProjectTasks implements OnInit {
 
   closeTaskDetails(): void {
     this.selectedTaskId.set(null);
+
+    // Clean up the address bar by navigating to the current route but dropping the query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { task: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   private executeActiveViewFetch(): void {
@@ -491,6 +499,21 @@ export class ProjectTasks implements OnInit {
         },
       });
     }
+  }
+
+  // Listen to the URL for deep links (for copy link feature)
+  private initializeDeepLinking(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const taskIdFromUrl = params.get('task');
+
+      if (taskIdFromUrl) {
+        // If the URL contains ?task=..., automatically assign it to open the popup
+        this.selectedTaskId.set(taskIdFromUrl);
+      } else {
+        // Ensure the popup is closed if the parameter isn't there
+        this.selectedTaskId.set(null);
+      }
+    });
   }
 
   private showToast(message: string): void {

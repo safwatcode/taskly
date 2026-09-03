@@ -340,7 +340,9 @@ export class EpicDetailsPopup implements OnInit {
   }
 
   copyLink(): void {
-    const url = `${window.location.origin}${window.location.pathname}?epic=${this.epicId}`;
+    // Construct a strict, canonical route regardless of where the popup was opened from
+    const url = `${window.location.origin}/project/${this.projectId}/epics?epic=${this.epicId}`;
+
     navigator.clipboard.writeText(url).then(() => {
       alert('Epic link copied to the clipboard!');
     });

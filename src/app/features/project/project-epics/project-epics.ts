@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../services/project.service';
 import { ProjectContextService } from '../services/project-context.service';
 import { Auth } from '../../../core/auth/services/auth';
@@ -24,6 +24,7 @@ import { EpicDetailsPopup } from './epic-details-popup/epic-details-popup';
   },
 })
 export class ProjectEpics implements OnInit {
+  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private projectService = inject(ProjectService);
   private projectContext = inject(ProjectContextService);
@@ -57,6 +58,7 @@ export class ProjectEpics implements OnInit {
   ngOnInit(): void {
     this.initializeSearch();
     this.initializeContext();
+    this.initializeDeepLinking();
   }
 
   // Setup Search Debounce
@@ -184,6 +186,20 @@ export class ProjectEpics implements OnInit {
       });
   }
 
+  // Listen the URL for deep links (for copy link feature)
+  private initializeDeepLinking(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const epicIdFromUrl = params.get('epic');
+
+      if (epicIdFromUrl) {
+        // If the URL has ?epic=..., automatically open the popup
+        this.selectedEpicId = epicIdFromUrl;
+      } else {
+        // If the URL doesn't have it, ensure the popup is closed
+        this.selectedEpicId = null;
+      }
+    });
+  }
   // Triggered by the search input element
   onSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -204,6 +220,13 @@ export class ProjectEpics implements OnInit {
 
   closeEpicDetails(): void {
     this.selectedEpicId = null;
+
+    // Clean up the URL by navigating to the current route but dropping the query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { epic: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   retryConnection(): void {

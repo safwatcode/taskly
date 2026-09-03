@@ -429,7 +429,8 @@ export class TaskDetailsPopup implements OnInit {
   }
 
   copyLink(): void {
-    const url = `${window.location.origin}${window.location.pathname}?task=${this.taskId()}`;
+    const url = `${window.location.origin}/project/${this.projectId()}/tasks?task=${this.taskId()}`;
+
     navigator.clipboard.writeText(url).then(() => {
       alert('Task link copied to the clipboard!');
     });
