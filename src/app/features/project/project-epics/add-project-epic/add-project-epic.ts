@@ -122,13 +122,17 @@ export class AddProjectEpic implements OnInit {
       project: this.projectService.getProjectById(this.projectId),
       members: this.projectService.getProjectMembers(this.projectId),
       userProfile: this.authService.getUserProfile().pipe(catchError(() => of(null))),
+
+      // BACKGROUND HARVEST - Silently fetch tasks to mine the missing names
+      tasks: this.projectService
+        .getAllProjectTasks(this.projectId, 100, 0)
+        .pipe(catchError(() => of({ content: [], totalElements: 0 }))),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
           this.projectName = data.project.name;
 
-          // Extract the logged-in user's name and email from the Auth token
           let activeUserName: string | null = null;
           let activeUserEmail: string | null = null;
 
@@ -138,16 +142,67 @@ export class AddProjectEpic implements OnInit {
             activeUserEmail = res.email || res.user_metadata?.email || null;
           }
 
-          // Inject Auth name if DB name is missing for the active user
-          this.members = data.members.map((member) => {
-            if (
-              member.email === activeUserEmail &&
-              (!member.name || !member.name.trim()) &&
-              activeUserName
-            ) {
-              return { ...member, name: activeUserName };
+          // Name Dictionary
+          const nameDict = new Map<string, string>();
+
+          // Harvest names from the background tasks
+          if (data.tasks && data.tasks.content) {
+            data.tasks.content.forEach((task) => {
+              if (task.assignee?.email && task.assignee?.name) {
+                nameDict.set(task.assignee.email.toLowerCase(), task.assignee.name);
+              }
+              const tAny = task as any;
+              if (tAny.created_by?.email && tAny.created_by?.name) {
+                nameDict.set(tAny.created_by.email.toLowerCase(), tAny.created_by.name);
+              }
+            });
+          }
+
+          // Harvest names from members that actually came back correctly
+          data.members.forEach((m) => {
+            if (m.email && m.name) {
+              nameDict.set(m.email.toLowerCase(), m.name);
             }
-            return member;
+          });
+
+          // Deduplication Injection for members
+          const uniqueMembersMap = new Map<string, ProjectMemberResponse>();
+
+          data.members.forEach((member) => {
+            const emailKey = member.email?.toLowerCase();
+            const key = emailKey || member.id;
+
+            // Inject from Active User Profile
+            if (emailKey === activeUserEmail && !member.name && activeUserName) {
+              member.name = activeUserName;
+            }
+
+            // Inject from the Background Tasks Dictionary
+            if (!member.name && emailKey && nameDict.has(emailKey)) {
+              member.name = nameDict.get(emailKey)!;
+            }
+
+            const existing = uniqueMembersMap.get(key);
+
+            if (!existing) {
+              uniqueMembersMap.set(key, member);
+            } else if (!existing.name && member.name) {
+              // Overwrite nameless duplicates with named ones
+              uniqueMembersMap.set(key, member);
+            }
+          });
+
+          // Sort the 'OWNER' role to the top!
+          this.members = Array.from(uniqueMembersMap.values()).sort((a, b) => {
+            const roleA = a.role?.toUpperCase() || '';
+            const roleB = b.role?.toUpperCase() || '';
+
+            if (roleA === 'OWNER' && roleB !== 'OWNER') return -1;
+            if (roleB === 'OWNER' && roleA !== 'OWNER') return 1;
+
+            const nameA = (a.name || a.email || '').toLowerCase();
+            const nameB = (b.name || b.email || '').toLowerCase();
+            return nameA.localeCompare(nameB);
           });
 
           this.isLoadingData = false;

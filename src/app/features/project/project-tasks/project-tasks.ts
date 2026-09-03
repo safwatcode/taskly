@@ -534,7 +534,7 @@ export class ProjectTasks implements OnInit {
   }
 
   getInitials(name: string | null | undefined): string {
-    if (!name || !name.trim()) return 'N/A';
+    if (!name || !name.trim()) return `N/A`;
     const parts = name.trim().split(/\s+/);
     return parts.length >= 2 && parts[0].length > 0 && parts[1].length > 0
       ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()

@@ -19,6 +19,7 @@
         </h1>
 
         <button
+          (click)="isInviteModalOpen.set(true)"
           class="hidden md:flex bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-2.5 px-5 rounded-lg items-center gap-2 transition-colors shadow-sm cursor-pointer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -34,7 +35,7 @@
   }
 
   <!-- Main Content Area -->
-  <div class="grow flex flex-col overflow-y-auto overflow-x-hidden relative pb-28 md:pb-0">
+  <div class="grow flex flex-col overflow-y-auto overflow-x-hidden relative pb-28 mx-5 md:mx-10 md:pb-0">
 
     @if (isLoading) {
       <!-- Loading State -->
@@ -140,6 +141,7 @@
             There are currently no members assigned to this project. Invite your colleagues to start collaborating.
           </p>
           <button
+            (click)="isInviteModalOpen.set(true)"
             class="bg-[#003D9B] hover:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-md shadow-blue-900/20">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -156,7 +158,7 @@
     } @else {
       <!-- Members List -->
       <div
-        class="max-w-5xl mx-auto w-full md:bg-white md:rounded-[20px] md:shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:border md:border-slate-100 md:overflow-hidden">
+        class="w-full  md:bg-white rounded-lg md:border md:border-slate-100 md:overflow-hidden">
         <div
           class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">
           <div class="col-span-6">MEMBER</div>
@@ -165,29 +167,32 @@
         </div>
 
         <!-- Members Data Rows -->
-        @for (member of members; track member.id) {
+        @for (member of members; track member.id || member.email || $index) {
           <div
-            class="bg-white rounded-2xl p-4 shadow-sm mb-4 md:mb-0 md:bg-transparent md:rounded-none md:p-0 md:shadow-none md:border-b md:border-slate-50 flex items-center justify-between md:grid md:grid-cols-12 md:gap-4 md:px-6 md:py-4 md:hover:bg-slate-50/50 transition-colors duration-150">
+            class="bg-white rounded-lg p-4 mb-4 md:mb-0 md:bg-transparent md:rounded-none md:p-0 md:shadow-none md:border-b cursor-pointer md:border-slate-50 flex items-center justify-between md:grid md:grid-cols-12 md:gap-4 md:px-6 md:py-4 md:hover:bg-slate-50/50 transition-colors duration-150">
 
             <div class="flex items-center gap-4 md:col-span-6 min-w-0">
               <!-- Avatar -->
               @if (member.avatar) {
                 <div
                   class="w-12 h-12 md:w-11 md:h-11 rounded-xl overflow-hidden shrink-0 shadow-sm border border-slate-100">
-                  <img [src]="member.avatar" [alt]="member.name || 'N/A'" class="w-full h-full object-cover">
+                  <img [src]="member.avatar" [alt]="member.name || member.email" class="w-full h-full object-cover">
                 </div>
               } @else {
+
+                <!-- Fallback to email for Avatar Color and Initials -->
                 <div
                   class="w-12 h-12 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-[15px] md:text-[13px] font-bold shrink-0 border border-white/50 shadow-sm"
-                  [ngClass]="getAvatarColorClass(member.name)">
-                  {{ getInitials(member.name) }}
+                  [ngClass]="getAvatarColorClass(member.name || member.email)">
+                  {{ getInitials(member.name || member.email) }}
                 </div>
               }
+
 
               <!-- Name & Email -->
               <div class="truncate min-w-0">
                 <div class="text-[15px] font-bold text-[#041B3C] truncate">
-                  {{ member.name ? member.name : 'N/A' }}
+                  {{ member.name ? member.name : 'Unknown User' }}
                 </div>
                 <div class="text-[13px] text-slate-500 truncate mt-0.5">{{ member.email }}</div>
               </div>
@@ -196,10 +201,11 @@
             <!-- Role -->
             <div class="flex flex-col items-end justify-between h-12 md:hidden shrink-0 ml-2">
               <span
-                class="px-2 py-1 text-[9px] font-bold rounded-md tracking-widest uppercase bg-blue-100 text-[#003D9B]">
+                class="px-2 py-1 text-[9px] w-14.25 text-center font-bold rounded-md tracking-widest uppercase bg-blue-100 text-[#003D9B]">
                 {{ member.role }}
               </span>
 
+              <!-- Action dots-->
               <button
                 class="text-slate-400 hover:text-[#041B3C] rounded transition-colors focus:outline-none cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -213,7 +219,7 @@
 
             <!-- Mobile Role -->
             <div class="hidden md:flex md:col-span-4 items-center">
-              <span class="px-3.5 py-1 text-[10px] font-bold rounded-full tracking-widest uppercase"
+              <span class="py-1 text-[10px] w-[65px] text-center font-bold rounded-full  uppercase"
                     [ngClass]="getRoleBadgeClass(member.role)">
                 {{ member.role }}
               </span>
@@ -240,6 +246,7 @@
   <!-- Mobile Floating Action Button -->
   @if (!isLoading && !errorMessage) {
     <button
+      (click)="isInviteModalOpen.set(true)"
       class="md:hidden fixed bottom-24 right-6 bg-[#003D9B] hover:bg-blue-800 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/30 z-40 transition-transform active:scale-95 cursor-pointer">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round">
@@ -251,4 +258,13 @@
     </button>
   }
 
+  <!-- Invite Member Popup Overlay -->
+  @if (isInviteModalOpen()) {
+    <app-invite-member-popup
+      [projectId]="projectId"
+      [projectName]="projectName"
+      [existingMembers]="members"
+      (closeDialog)="isInviteModalOpen.set(false)">
+    </app-invite-member-popup>
+  }
 </div>

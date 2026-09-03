@@ -123,13 +123,16 @@
 
               <div class="flex items-center gap-2 truncate">
                 @if (selectedAssignee) {
+
+                  <!-- Fallback to email for Selected Avatar Color and Initials -->
                   <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                       [ngClass]="getAvatarColorClass(selectedAssignee.name)">
-                    {{ getInitials(selectedAssignee.name) }}
+                       [ngClass]="getAvatarColorClass(selectedAssignee.name || selectedAssignee.email)">
+                    {{ getInitials(selectedAssignee.name || selectedAssignee.email) }}
                   </div>
                   <span class="text-[15px] font-medium text-[#041B3C] truncate">
                     {{ selectedAssignee.name || selectedAssignee.email }}
                   </span>
+
                 } @else if (controls['assignee_id'].value === null) {
                   <div
                     class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 bg-[#F1F3FF] text-slate-500">
@@ -165,18 +168,21 @@
 
             <!-- Invisible Backdrop to close dropdown -->
             @if (isAssigneeDropdownOpen) {
-              <div class="fixed inset-0 z-40" (click)="isAssigneeDropdownOpen = false"></div>
+              <div
+                class="fixed inset-0 z-40" (click)="isAssigneeDropdownOpen = false"></div>
             }
 
             <!-- Dropdown Menu -->
             @if (isAssigneeDropdownOpen) {
               <div
+                (wheel)="$event.stopPropagation()"
+                (touchmove)="$event.stopPropagation()"
                 class="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-slate-100 rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 py-1.5 max-h-56 overflow-y-auto animate-fade-in-up origin-top">
 
                 <!-- Unassigned Option -->
                 <div
                   (click)="selectAssignee(null)"
-                  class="flex items-center gap-2.5 px-3 py-2 cursor-pointer group transition-colors hover:bg-[#003D9B]">
+                     class="flex items-center gap-2.5 px-3 py-2 cursor-pointer group transition-colors hover:bg-[#003D9B]">
                   <div
                     class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors bg-[#F1F3FF] text-slate-500 group-hover:bg-white/20 group-hover:text-white">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -188,7 +194,6 @@
                   </div>
                   <span class="text-[14px] font-medium text-slate-700 group-hover:text-white transition-colors w-full">Unassigned</span>
 
-                  <!-- Checkmark for Unassigned -->
                   @if (controls['assignee_id'].value === null) {
                     <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-auto" width="16" height="16"
                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
@@ -198,27 +203,26 @@
                   }
                 </div>
 
-                <!-- Divider-->
                 <div class="h-px bg-slate-100 my-1 mx-3"></div>
 
                 <!-- Member Options -->
-                @for (member of members; track $index) {
-                  <div
-                    (click)="selectAssignee($any(member).user_id || $any(member).sub || member.id)"
+                @for (member of members; track member.id || member.email || $index) {
+                  <div (click)="selectAssignee($any(member).user_id || $any(member).sub || member.id)"
                        class="flex items-center gap-2.5 px-3 py-2 cursor-pointer group transition-colors hover:bg-[#003D9B]">
 
+                    <!-- Fallback to email for List Avatar Color and Initials -->
                     <div
                       class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 border border-transparent transition-all group-hover:border-white/30 shadow-sm"
-                      [ngClass]="getAvatarColorClass(member.name || 'Unknown')">
-                      {{ getInitials(member.name || 'Unknown') }}
+                      [ngClass]="getAvatarColorClass(member.name || member.email)">
+                      {{ getInitials(member.name || member.email) }}
                     </div>
 
+                    <!-- Fallback to email for List Display Name -->
                     <span
                       class="text-[14px] font-medium text-[#041B3C] group-hover:text-white transition-colors truncate w-full">
-                      {{ member.name || 'Unknown User' }}
+                      {{ member.name || member.email || 'Unknown User' }}
                     </span>
 
-                    <!-- Checkmark for Selected Member -->
                     @if ((($any(member).user_id || $any(member).sub || member.id) === controls['assignee_id'].value)) {
                       <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-auto" width="16" height="16"
                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"

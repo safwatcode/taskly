@@ -121,53 +121,89 @@ export class TaskDetailsPopup implements OnInit {
             activeUserEmail = res.email || res.user_metadata?.email || null;
           }
 
-          const mappedMembers = data.membersData.map((member) => {
-            if (
-              member.email === activeUserEmail &&
-              (!member.name || !member.name.trim()) &&
-              activeUserName
-            ) {
-              return { ...member, name: activeUserName };
-            }
-            return member;
+          // Name Dictionary
+          // Harvest the correct name from EVERY available source
+          const nameDict = new Map<string, string>();
+
+          // Source A: Active User Auth Profile
+          if (activeUserEmail && activeUserName) {
+            nameDict.set(activeUserEmail.toLowerCase(), activeUserName);
+          }
+
+          // Source B: Task Assignee data
+          if (data.taskData.assignee?.email && data.taskData.assignee?.name) {
+            nameDict.set(data.taskData.assignee.email.toLowerCase(), data.taskData.assignee.name);
+          }
+
+          // Source C: Task Reporter data
+          const anyTask = data.taskData as any;
+          if (anyTask.created_by?.email && anyTask.created_by?.name) {
+            nameDict.set(anyTask.created_by.email.toLowerCase(), anyTask.created_by.name);
+          }
+
+          // Source D: Other Members
+          data.membersData.forEach((m) => {
+            if (m.email && m.name) nameDict.set(m.email.toLowerCase(), m.name);
           });
+
+          // Deduplication and injection
+          const uniqueMembersMap = new Map<string, ProjectMemberResponse>();
+
+          data.membersData.forEach((member) => {
+            const emailKey = member.email?.toLowerCase();
+            const key = emailKey || member.id;
+
+            // If they don't have a name, but our Dictionary found it, inject it!
+            if (!member.name && emailKey && nameDict.has(emailKey)) {
+              member.name = nameDict.get(emailKey);
+            }
+
+            const existing = uniqueMembersMap.get(key);
+            if (!existing) {
+              uniqueMembersMap.set(key, member);
+            } else if (!existing.name && member.name) {
+              uniqueMembersMap.set(key, member);
+            }
+          });
+
+          // Process the perfected unique members array
+          const mappedMembers = Array.from(uniqueMembersMap.values());
           this.members.set(mappedMembers);
           this.epics.set(data.epicsData.content);
 
+          // Patch the Task Object
           const fetchedTask = { ...data.taskData };
+
           if (
             fetchedTask.assignee &&
-            fetchedTask.assignee.email === activeUserEmail &&
-            !fetchedTask.assignee.name &&
-            activeUserName
+            (!fetchedTask.assignee.name || !fetchedTask.assignee.name.trim()) &&
+            fetchedTask.assignee.email
           ) {
-            fetchedTask.assignee = { ...fetchedTask.assignee, name: activeUserName };
+            // Inject the name from the dictionary
+            fetchedTask.assignee.name = nameDict.get(fetchedTask.assignee.email.toLowerCase())!;
           }
 
-          const taskAny = fetchedTask as any;
           if (
-            taskAny.created_by &&
-            taskAny.created_by.email === activeUserEmail &&
-            !taskAny.created_by.name &&
-            activeUserName
+            anyTask.created_by &&
+            (!anyTask.created_by.name || !anyTask.created_by.name.trim()) &&
+            anyTask.created_by.email
           ) {
-            taskAny.created_by = { ...taskAny.created_by, name: activeUserName };
+            // Inject the name from the dictionary
+            anyTask.created_by.name = nameDict.get(anyTask.created_by.email.toLowerCase());
           }
 
           this.task.set(fetchedTask);
           this.epicDetails.set(this.epics().find((e) => e.id === fetchedTask.epic_id) || null);
 
-          // Initialize drafts
+          // Initialize Drafts
           this.draftTitle = fetchedTask.title;
           this.draftDescription = fetchedTask.description || '';
           this.draftEpicId = fetchedTask.epic_id || '';
           this.draftDueDate = fetchedTask.due_date ? fetchedTask.due_date.substring(0, 10) : '';
 
-          // Assignee Draft Initialization (To handle the Unassigned option)
           let initialAssigneeId =
             fetchedTask.assignee?.sub || (fetchedTask.assignee as any)?.user_id || '';
 
-          // If the backend didn't send the ID, find it using their email or name
           if (!initialAssigneeId && fetchedTask.assignee) {
             const matchedMember = this.members().find(
               (m) =>
@@ -261,7 +297,6 @@ export class TaskDetailsPopup implements OnInit {
         },
       });
   }
-
 
   selectAssignee(memberId: string | null): void {
     this.isAssigneeDropdownOpen.set(false);

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -7,15 +7,14 @@ import { catchError } from 'rxjs/operators';
 import { ProjectService } from '../services/project.service';
 import { ProjectContextService } from '../services/project-context.service';
 import { ProjectMemberResponse } from '../models/project.model';
-
-// For fetching user profile data to solve getting user's name problem in members list
 import { Auth } from '../../../core/auth/services/auth';
 import { UserProfileResponse } from '../../../core/auth/models/user-profile.model';
+import { InviteMemberPopup } from './invite-member-popup/invite-member-popup';
 
 @Component({
   selector: 'app-project-members',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, InviteMemberPopup],
   templateUrl: './project-members.html',
   styleUrls: ['./project-members.css'],
   host: {
@@ -35,20 +34,23 @@ export class ProjectMembers implements OnInit {
   errorMessage: string | null = null;
   projectName = '';
 
+  // Using project id to open pass to the popup modal
+  projectId = '';
+
+  isInviteModalOpen = signal(false);
+
   ngOnInit(): void {
     this.fetchProjectMembers();
   }
 
   private fetchProjectMembers(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const projectId = params.get('projectId');
+      const id = params.get('projectId');
 
-      if (projectId) {
-        setTimeout(() => {
-          this.projectContext.setProjectId(projectId);
-        }, 0);
-
-        this.fetchData(projectId);
+      if (id) {
+        this.projectId = id; // Save it here
+        setTimeout(() => this.projectContext.setProjectId(id), 0);
+        this.fetchData(id);
       } else {
         this.isLoading = false;
         this.errorMessage = 'Project not found.';
@@ -62,20 +64,24 @@ export class ProjectMembers implements OnInit {
     this.errorMessage = null;
     this.cdr.detectChanges();
 
-    // Fetching Project, Members, and Current User Profile simultaneously
+    // Fetching Project, Members, Auth, and Tasks simultaneously
     forkJoin({
       project: this.projectService.getProjectById(projectId),
       members: this.projectService.getProjectMembers(projectId),
-
-      // catchError ensures that if the Auth fetch fails, it doesn't break the whole page
       userProfile: this.authService.getUserProfile().pipe(catchError(() => of(null))),
+
+      // A process called "Background Harvest": silently fetch up to 100 tasks just to mine the missing names
+      // catchError ensures that if this background fetch fails, it doesn't break the members page
+
+      tasks: this.projectService
+        .getAllProjectTasks(projectId, 100, 0)
+        .pipe(catchError(() => of({ content: [], totalElements: 0 }))),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
           this.projectName = data.project.name;
 
-          // Extract the logged-in user's name and email from the Auth token. As we did in the navbar (this is the issue)
           let activeUserName: string | null = null;
           let activeUserEmail: string | null = null;
 
@@ -85,16 +91,66 @@ export class ProjectMembers implements OnInit {
             activeUserEmail = res.email || res.user_metadata?.email || null;
           }
 
-          // Go through the members. If a member is the logged-in user, and the database name is missing, inject the Auth (Sign-up data) name.
-          this.members = data.members.map((member) => {
-            if (
-              member.email === activeUserEmail &&
-              (!member.name || !member.name.trim()) &&
-              activeUserName
-            ) {
-              return { ...member, name: activeUserName };
+          // Name Dictionary
+          const nameDict = new Map<string, string>();
+
+          // Harvest names from the background tasks
+          if (data.tasks && data.tasks.content) {
+            data.tasks.content.forEach((task) => {
+              if (task.assignee?.email && task.assignee?.name) {
+                nameDict.set(task.assignee.email.toLowerCase(), task.assignee.name);
+              }
+              const tAny = task as any;
+              if (tAny.created_by?.email && tAny.created_by?.name) {
+                nameDict.set(tAny.created_by.email.toLowerCase(), tAny.created_by.name);
+              }
+            });
+          }
+
+          // Harvest names from any members that actually came back correctly
+          data.members.forEach((m) => {
+            if (m.email && m.name) {
+              nameDict.set(m.email.toLowerCase(), m.name);
             }
-            return member;
+          });
+          // Duplicate Prevention (Front-End only)
+          const uniqueMembersMap = new Map<string, ProjectMemberResponse>();
+          data.members.forEach((member) => {
+            const emailKey = member.email?.toLowerCase();
+            const key = emailKey || member.id;
+
+            // Inject from Active User Profile
+            if (emailKey === activeUserEmail && !member.name && activeUserName) {
+              member.name = activeUserName;
+            }
+
+            // Inject from the Background Tasks Dictionary
+            if (!member.name && emailKey && nameDict.has(emailKey)) {
+              member.name = nameDict.get(emailKey)!;
+            }
+
+            const existing = uniqueMembersMap.get(key);
+
+            if (!existing) {
+              uniqueMembersMap.set(key, member);
+            } else if (!existing.name && member.name) {
+              // If we already saved a nameless duplicate, overwrite it with the named one!
+              uniqueMembersMap.set(key, member);
+            }
+          });
+
+          this.members = Array.from(uniqueMembersMap.values()).sort((a, b) => {
+            const roleA = a.role?.toUpperCase() || '';
+            const roleB = b.role?.toUpperCase() || '';
+
+            // Sorting the members with the 'OWNER' role of the project at the top
+            if (roleA === 'OWNER' && roleB !== 'OWNER') return -1;
+            if (roleB === 'OWNER' && roleA !== 'OWNER') return 1;
+
+            // The else we will sort them alphabetically by their name or email (In case if the Unknown name problem)
+            const nameA = (a.name || a.email || '').toLowerCase();
+            const nameB = (b.name || b.email || '').toLowerCase();
+            return nameA.localeCompare(nameB);
           });
 
           this.isLoading = false;
@@ -108,7 +164,6 @@ export class ProjectMembers implements OnInit {
         },
       });
   }
-
   retryConnection(): void {
     const currentProjectId = this.projectContext.activeProjectId();
     if (currentProjectId) {

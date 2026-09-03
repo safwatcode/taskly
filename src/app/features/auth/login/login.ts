@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Auth } from '../../../core/auth/services/auth';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button } from '../../../shared/components/button/button';
 import { InputField } from '../../../shared/components/input/input';
 import { LoginResponse } from '../../../core/auth/models/login.model';
@@ -32,6 +32,7 @@ export class Login implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
@@ -80,7 +81,18 @@ export class Login implements OnInit {
           if (res.access_token) {
             this.authService.saveSession(res.access_token, formValues.rememberMe ?? false);
             this.cdr.detectChanges();
-            this.router.navigate(['/project']);
+
+            // Check for a returnUrl in the active route parameters
+            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+            if (returnUrl) {
+              // If an invitation link brought them here, send them back to it!
+              // We use navigateByUrl because returnUrl is a full path string (e.g., '/invite?token=123')
+              this.router.navigateByUrl(returnUrl);
+            } else {
+              // Otherwise, send them to the default projects dashboard
+              this.router.navigate(['/project']);
+            }
           } else {
             this.errorMessage = 'Authentication failed: Invalid response from server.';
             this.cdr.detectChanges();

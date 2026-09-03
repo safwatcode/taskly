@@ -7,7 +7,7 @@ import {
   HttpResponse,
 } from '@angular/common/http';
 import { map, Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import {
   EpicPayload,
   PaginatedResponse,
@@ -35,35 +35,67 @@ export class ProjectService {
 
   private rpcProjectsURL = `${this.baseURL}/rest/v1/rpc/get_projects`;
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
+  private rpcInviteMemberURL = `${this.baseURL}/rest/v1/rpc/invite_member`;
+  private rpcAcceptInvitationURL = `${this.baseURL}/rest/v1/rpc/accept_invitation`;
+
+  // Global name caching
+  private userNameCache = new Map<string, string>();
+
+  private harvestNamesFromTask(task: ProjectTaskResponse): void {
+    if (task.assignee?.email && task.assignee?.name) {
+      this.userNameCache.set(task.assignee.email.toLowerCase(), task.assignee.name);
+    }
+    const tAny = task as any;
+    if (tAny.created_by?.email && tAny.created_by?.name) {
+      this.userNameCache.set(tAny.created_by.email.toLowerCase(), tAny.created_by.name);
+    }
+  }
+
+  private harvestNamesFromMember(member: ProjectMemberResponse): void {
+    if (member.email && member.name) {
+      this.userNameCache.set(member.email.toLowerCase(), member.name);
+    }
+  }
+
+  private enrichMemberName(member: ProjectMemberResponse): ProjectMemberResponse {
+    if (!member.name && member.email) {
+      const cachedName = this.userNameCache.get(member.email.toLowerCase());
+      if (cachedName) member.name = cachedName;
+    }
+    return member;
+  }
+
+  private enrichTaskNames(task: ProjectTaskResponse): ProjectTaskResponse {
+    if (task.assignee && !task.assignee.name && task.assignee.email) {
+      const cachedName = this.userNameCache.get(task.assignee.email.toLowerCase());
+      if (cachedName) task.assignee.name = cachedName;
+    }
+    const tAny = task as any;
+    if (tAny.created_by && !tAny.created_by.name && tAny.created_by.email) {
+      const cachedName = this.userNameCache.get(tAny.created_by.email.toLowerCase());
+      if (cachedName) tAny.created_by.name = cachedName;
+    }
+    return task;
+  }
 
   getProjects(limit: number, offset: number): Observable<PaginatedResponse<ProjectResponse>> {
     return this.http
       .get<ProjectResponse[]>(this.rpcProjectsURL, {
         params: { limit, offset },
-        // Required header to force the backend to return the exact total count
         headers: { Prefer: 'count=exact' },
-        // Return the full response object, not just the body, so we can read headers
         observe: 'response',
       })
       .pipe(
         map((response: HttpResponse<ProjectResponse[]>) => {
-          // Extract content from header
           const contentRange = response.headers.get('Content-Range') || '0/0';
           const totalCount = parseInt(contentRange.split('/')[1], 10);
-
-          return {
-            content: response.body || [],
-            totalElements: totalCount,
-          };
+          return { content: response.body || [], totalElements: totalCount };
         }),
       );
   }
 
   addProject(payload: ProjectPayload): Observable<ProjectResponse[]> {
-    const headers = new HttpHeaders({
-      Prefer: 'return=representation',
-    });
-
+    const headers = new HttpHeaders({ Prefer: 'return=representation' });
     return this.http
       .post<ProjectResponse[]>(this.projectsURL, payload, { headers })
       .pipe(catchError(this.handleError.bind(this)));
@@ -84,9 +116,12 @@ export class ProjectService {
 
   getProjectMembers(projectId: string): Observable<ProjectMemberResponse[]> {
     const params = new HttpParams().set('project_id', `eq.${projectId}`);
-    return this.http
-      .get<ProjectMemberResponse[]>(this.rpcProjectMembersURL, { params })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<ProjectMemberResponse[]>(this.rpcProjectMembersURL, { params }).pipe(
+      // Harvest any names, then patch any missing ones!
+      tap((members) => members.forEach((m) => this.harvestNamesFromMember(m))),
+      map((members) => members.map((m) => this.enrichMemberName(m))),
+      catchError(this.handleError.bind(this)),
+    );
   }
 
   getProjectEpics(
@@ -100,56 +135,39 @@ export class ProjectService {
       .set('limit', limit.toString())
       .set('offset', offset.toString())
       .set('order', 'created_at.asc');
-
-    // Apply case-insensitive wildcard search if term exists
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm && searchTerm.trim() !== '')
       params = params.set('title', `ilike.%${searchTerm.trim()}%`);
-    }
 
     return this.http
       .get<ProjectEpicResponse[]>(this.projectEpicsURL, {
         params,
-        headers: { Prefer: 'count=exact' }, // Required to get total count
-        observe: 'response', // Required to access the Content-Range header
+        headers: { Prefer: 'count=exact' },
+        observe: 'response',
       })
       .pipe(
         map((response: HttpResponse<ProjectEpicResponse[]>) => {
           const contentRange = response.headers.get('Content-Range') || '0/0';
           const totalCount = parseInt(contentRange.split('/')[1], 10) || 0;
-
-          return {
-            content: response.body || [],
-            totalElements: totalCount,
-          };
+          return { content: response.body || [], totalElements: totalCount };
         }),
         catchError(this.handleError.bind(this)),
       );
   }
 
   createEpic(payload: EpicPayload): Observable<ProjectEpicResponse[]> {
-    const headers = new HttpHeaders({
-      Prefer: 'return=representation',
-    });
-
+    const headers = new HttpHeaders({ Prefer: 'return=representation' });
     return this.http
       .post<ProjectEpicResponse[]>(this.epicsURL, payload, { headers })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Epic details popup
   getEpicDetails(projectId: string, epicId: string): Observable<ProjectEpicResponse> {
     const params = new HttpParams().set('project_id', `eq.${projectId}`).set('id', `eq.${epicId}`);
-
-    const headers = new HttpHeaders({
-      Prefer: 'return=representation',
-    });
+    const headers = new HttpHeaders({ Prefer: 'return=representation' });
 
     return this.http.get<ProjectEpicResponse[]>(this.projectEpicsURL, { params, headers }).pipe(
       map((epics) => {
-        if (!epics || epics.length === 0) {
-          throw new Error('Epic not found');
-        }
-        // API response is an array, use the first item
+        if (!epics || epics.length === 0) throw new Error('Epic not found');
         return epics[0];
       }),
       catchError(this.handleError.bind(this)),
@@ -158,9 +176,12 @@ export class ProjectService {
 
   getEpicTasks(epicId: string): Observable<ProjectTaskResponse[]> {
     const params = new HttpParams().set('epic_id', `eq.${epicId}`);
-    return this.http
-      .get<ProjectTaskResponse[]>(this.projectTasksURL, { params })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<ProjectTaskResponse[]>(this.projectTasksURL, { params }).pipe(
+      // Harvest and Patch
+      tap((tasks) => tasks.forEach((t) => this.harvestNamesFromTask(t))),
+      map((tasks) => tasks.map((t) => this.enrichTaskNames(t))),
+      catchError(this.handleError.bind(this)),
+    );
   }
 
   updateEpic(epicId: string, payload: Partial<EpicPayload>): Observable<void> {
@@ -170,10 +191,7 @@ export class ProjectService {
   }
 
   createTask(payload: TaskPayload): Observable<ProjectTaskResponse[]> {
-    const headers = new HttpHeaders({
-      Prefer: 'return=representation',
-    });
-
+    const headers = new HttpHeaders({ Prefer: 'return=representation' });
     return this.http
       .post<ProjectTaskResponse[]>(this.tasksURL, payload, { headers })
       .pipe(catchError(this.handleError.bind(this)));
@@ -198,19 +216,17 @@ export class ProjectService {
       .set('order', 'created_at.desc')
       .set('limit', limit.toString())
       .set('offset', offset.toString());
-
-    // Apply wildcard case-insensitive search
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm && searchTerm.trim() !== '')
       params = params.set('title', `ilike.%${searchTerm.trim()}%`);
-    }
 
-    return this.http
-      .get<ProjectTaskResponse[]>(this.projectTasksURL, { params })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<ProjectTaskResponse[]>(this.projectTasksURL, { params }).pipe(
+      // Harvest and Patch
+      tap((tasks) => tasks.forEach((t) => this.harvestNamesFromTask(t))),
+      map((tasks) => tasks.map((t) => this.enrichTaskNames(t))),
+      catchError(this.handleError.bind(this)),
+    );
   }
 
-  // Fetch all tasks for the List View
-  // The function accepts limit and offset for List View Pagination
   getAllProjectTasks(
     projectId: string,
     limit = 5,
@@ -222,11 +238,8 @@ export class ProjectService {
       .set('order', 'created_at.desc')
       .set('limit', limit.toString())
       .set('offset', offset.toString());
-
-    // Apply wildcard case-insensitive search
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm && searchTerm.trim() !== '')
       params = params.set('title', `ilike.%${searchTerm.trim()}%`);
-    }
 
     return this.http
       .get<ProjectTaskResponse[]>(this.projectTasksURL, {
@@ -239,34 +252,50 @@ export class ProjectService {
           const contentRange = response.headers.get('Content-Range') || '0/0';
           const totalCount = parseInt(contentRange.split('/')[1], 10) || 0;
 
-          return {
-            content: response.body || [],
-            totalElements: totalCount,
-          };
+          // Cache harvest and Patch before sending to components
+          const enrichedContent = (response.body || []).map((t) => {
+            this.harvestNamesFromTask(t);
+            return this.enrichTaskNames(t);
+          });
+
+          return { content: enrichedContent, totalElements: totalCount };
         }),
         catchError(this.handleError.bind(this)),
       );
   }
 
   getTaskDetails(projectId: string, taskId: string): Observable<ProjectTaskResponse> {
-    const params = new HttpParams()
-      .set('project_id', `eq.${projectId}`)
-      .set('id', `eq.${taskId}`);
+    const params = new HttpParams().set('project_id', `eq.${projectId}`).set('id', `eq.${taskId}`);
 
     return this.http.get<ProjectTaskResponse[]>(this.projectTasksURL, { params }).pipe(
       map((tasks) => {
-        if (!tasks || tasks.length === 0) {
-          throw new Error('Task not found'); // Edge case handling
-        }
-        return tasks[0]; // Returns single task
+        if (!tasks || tasks.length === 0) throw new Error('Task not found');
+        const task = tasks[0];
+
+        // Harvest and Patch
+        this.harvestNamesFromTask(task);
+        return this.enrichTaskNames(task);
       }),
-      catchError(this.handleError.bind(this))
+      catchError(this.handleError.bind(this)),
     );
+  }
+
+  inviteMember(email: string, projectId: string): Observable<any> {
+    const payload = {
+      p_email: email,
+      p_project_id: projectId,
+      p_app_url: window.location.origin,
+      p_base_url: this.baseURL,
+    };
+    return this.http.post(`${this.rpcInviteMemberURL}`, payload);
+  }
+
+  acceptInvitation(token: string): Observable<any> {
+    return this.http.post(`${this.rpcAcceptInvitationURL}`, { p_token: token });
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unexpected error occurred while processing your request.';
-
     if (error.error instanceof ErrorEvent) {
       errorMessage = `Network Error: ${error.error.message}`;
     } else {
@@ -276,9 +305,7 @@ export class ProjectService {
         errorMessage = `Server Error (${error.status}): ${error.message}`;
       }
     }
-
     console.error('ProjectService Error:', error);
-
     return throwError(() => ({ message: errorMessage, status: error.status }));
   }
 }

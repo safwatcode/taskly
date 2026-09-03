@@ -37,6 +37,8 @@ export class ProjectEpics implements OnInit {
   epics: ProjectEpicResponse[] = [];
   selectedEpicId: string | null = null;
 
+  private nameDictionary = new Map<string, string>();
+
   activeUserName: string | null = null;
   activeUserEmail: string | null = null;
 
@@ -68,7 +70,7 @@ export class ProjectEpics implements OnInit {
       });
   }
 
-  // Initial Load (Fires once to get Project Name & User Profile)
+  // Initial Load (Fires once to get Project Name, User Profile, and Harvest Members)
   private initializeContext(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('projectId');
@@ -82,19 +84,35 @@ export class ProjectEpics implements OnInit {
         forkJoin({
           project: this.projectService.getProjectById(this.projectId),
           userProfile: this.authService.getUserProfile().pipe(catchError(() => of(null))),
+          // BACKGROUND HARVEST: Fetch members silently to build our Name Dictionary
+          members: this.projectService
+            .getProjectMembers(this.projectId)
+            .pipe(catchError(() => of([]))),
         })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: (data) => {
               this.projectName = data.project.name;
 
+              // Harvest Active User Profile
               if (data.userProfile) {
                 const res = data.userProfile as UserProfileResponse;
                 this.activeUserName = res.user_metadata?.name || null;
                 this.activeUserEmail = res.email || res.user_metadata?.email || null;
+
+                if (this.activeUserEmail && this.activeUserName) {
+                  this.nameDictionary.set(this.activeUserEmail.toLowerCase(), this.activeUserName);
+                }
               }
 
-              // After context is loaded, fetch the epics
+              // Harvest Project Members
+              data.members.forEach((m) => {
+                if (m.email && m.name) {
+                  this.nameDictionary.set(m.email.toLowerCase(), m.name);
+                }
+              });
+
+              // After context and dictionary are loaded, fetch the epics
               this.fetchEpicsOnly();
             },
             error: () => {
@@ -116,14 +134,10 @@ export class ProjectEpics implements OnInit {
     this.errorMessage = null;
 
     if (!silent) {
-      // Only show skeleton if not a silent refresh
       this.isLoading = true;
       this.cdr.detectChanges();
     }
 
-    this.cdr.detectChanges();
-
-    // Calculate offset
     const offset = (this.currentPage - 1) * this.pageSize;
 
     this.projectService
@@ -136,22 +150,24 @@ export class ProjectEpics implements OnInit {
           this.epics = paginatedData.content.map((epic) => {
             const updatedEpic = { ...epic };
 
+            // Apply Dictionary Injection to Assignee
             if (
               updatedEpic.assignee &&
-              updatedEpic.assignee.email === this.activeUserEmail &&
               (!updatedEpic.assignee.name || !updatedEpic.assignee.name.trim()) &&
-              this.activeUserName
+              updatedEpic.assignee.email
             ) {
-              updatedEpic.assignee = { ...updatedEpic.assignee, name: this.activeUserName };
+              const dictName = this.nameDictionary.get(updatedEpic.assignee.email.toLowerCase());
+              if (dictName) updatedEpic.assignee.name = dictName;
             }
 
+            // Apply Dictionary Injection to Creator
             if (
               updatedEpic.created_by &&
-              updatedEpic.created_by.email === this.activeUserEmail &&
               (!updatedEpic.created_by.name || !updatedEpic.created_by.name.trim()) &&
-              this.activeUserName
+              updatedEpic.created_by.email
             ) {
-              updatedEpic.created_by = { ...updatedEpic.created_by, name: this.activeUserName };
+              const dictName = this.nameDictionary.get(updatedEpic.created_by.email.toLowerCase());
+              if (dictName) updatedEpic.created_by.name = dictName;
             }
 
             return updatedEpic;

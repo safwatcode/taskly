@@ -75,11 +75,19 @@
             <div
               (click)="selectAssignee($any(member).user_id || $any(member).sub || member.id)"
               class="flex items-center gap-2.5 px-3 py-2 cursor-pointer group hover:bg-[#003D9B] transition-colors">
+
+              <!-- Fallback to email for Avatar Color and Initials -->
               <div class="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0"
-                   [ngClass]="getAvatarColorClass(member.name)">{{ getInitials(member.name) }}
+                   [ngClass]="getAvatarColorClass(member.name || member.email)">
+                {{ getInitials(member.name || member.email) }}
               </div>
+
+              <!-- Fallback to email for Display Name -->
               <span
-                class="text-[13px] font-medium text-[#041B3C] group-hover:text-white transition-colors truncate w-full">{{ member.name || 'Unknown' }}</span>
+                class="text-[13px] font-medium text-[#041B3C] group-hover:text-white transition-colors truncate w-full">
+                {{ member.name || member.email || 'Unknown User' }}
+              </span>
+
               @if ((($any(member).user_id || $any(member).sub || member.id) === draftAssigneeId)) {
                 <svg class="text-[#003D9B] group-hover:text-white shrink-0 ml-auto" width="14" height="14"
                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
@@ -241,9 +249,13 @@
               <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Assignee</span>
               <div class="flex items-center gap-2">
                 @if (task()!.assignee && (task()!.assignee?.name || task()!.assignee?.email)) {
+
+                  <!-- Fallback to email for Color and Initials -->
                   <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                       [ngClass]="getAvatarColorClass(task()!.assignee!.name)">{{ getInitials(task()!.assignee!.name) }}
+                       [ngClass]="getAvatarColorClass(task()!.assignee!.name || task()!.assignee!.email)">
+                    {{ getInitials(task()!.assignee!.name || task()!.assignee!.email) }}
                   </div>
+
                   <span
                     class="text-[12px] font-medium text-[#041B3C] truncate">{{ task()!.assignee!.name || task()!.assignee!.email }}</span>
                 } @else {
@@ -291,11 +303,15 @@
           <div class="bg-[#F1F3FF] rounded-lg p-4 flex flex-col justify-center">
             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Created By</span>
             <div class="flex items-center gap-2">
+
+              <!-- Fallback to email for Reporter Color and Initials -->
               <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                   [ngClass]="getAvatarColorClass($any(task()).created_by?.name)">{{ getInitials($any(task()).created_by?.name || 'System') }}
+                   [ngClass]="getAvatarColorClass($any(task()).created_by?.name || $any(task()).created_by?.email)">
+                {{ getInitials($any(task()).created_by?.name || $any(task()).created_by?.email || 'System') }}
               </div>
+
               <span
-                class="text-[12px] font-medium text-[#041B3C] truncate">{{ $any(task()).created_by?.name || 'System' }}</span>
+                class="text-[12px] font-medium text-[#041B3C] truncate">{{ $any(task()).created_by?.name || $any(task()).created_by?.email || 'System' }}</span>
             </div>
           </div>
 
@@ -457,9 +473,13 @@
               [ngClass]="isAssigneeDropdownOpen() ? 'ring-2 ring-[#003D9B]/20' : ''">
               <div class="flex items-center gap-2">
                 @if (task()!.assignee && (task()!.assignee?.name || task()!.assignee?.email)) {
+
+                  <!-- Fallback to email for Color and Initials -->
                   <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                       [ngClass]="getAvatarColorClass(task()!.assignee!.name)">{{ getInitials(task()!.assignee!.name) }}
+                       [ngClass]="getAvatarColorClass(task()!.assignee!.name || task()!.assignee!.email)">
+                    {{ getInitials(task()!.assignee!.name || task()!.assignee!.email) }}
                   </div>
+
                   <span
                     class="text-[14px] font-medium text-[#041B3C] truncate">{{ task()!.assignee!.name || task()!.assignee!.email }}</span>
                 } @else {
@@ -493,11 +513,15 @@
           <div>
             <span class="text-[12px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Reporter</span>
             <div class="flex items-center gap-2 px-1">
+
+              <!-- Fallback to email for Reporter Color and Initials -->
               <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                   [ngClass]="getAvatarColorClass($any(task()).created_by?.name)">{{ getInitials($any(task()).created_by?.name || 'System') }}
+                   [ngClass]="getAvatarColorClass($any(task()).created_by?.name || $any(task()).created_by?.email)">
+                {{ getInitials($any(task()).created_by?.name || $any(task()).created_by?.email || 'System') }}
               </div>
+
               <span
-                class="text-[14px] font-medium text-[#041B3C] truncate">{{ $any(task()).created_by?.name || 'System' }}</span>
+                class="text-[14px] font-medium text-[#041B3C] truncate">{{ $any(task()).created_by?.name || $any(task()).created_by?.email || 'System' }}</span>
             </div>
           </div>
 

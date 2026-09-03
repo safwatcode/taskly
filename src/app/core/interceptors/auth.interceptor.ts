@@ -38,13 +38,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         // Global 401 Unauthorized Error Handler
         if (error.status === 401) {
           console.warn('Unauthorized request detected. Redirecting to login page...');
-          // Wipe the invalid token
           authService.clearSession();
-          // Redirect the user automatically to the login page
-          router.navigate(['/login']);
+
+          // Capture the current URL so we don't lose invite links
+          const currentUrl = router.routerState.snapshot.url;
+
+          // Only append returnUrl if we aren't already on the login page
+          if (!currentUrl.includes('/login')) {
+            router.navigate(['/login'], { queryParams: { returnUrl: currentUrl } });
+          } else {
+            router.navigate(['/login']);
+          }
         }
 
-        // Pass the error back down the stream so individual components can still handle other errors (like 404s or 500s)
         return throwError(() => error);
       }),
     );

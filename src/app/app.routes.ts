@@ -82,6 +82,13 @@ export const routes: Routes = [
       { path: '', redirectTo: 'project', pathMatch: 'full' },
     ],
   },
+  {
+    path: 'invite',
+    loadComponent: () =>
+      import('./features/project/project-members/accept-invitation/accept-invitation').then(
+        (m) => m.AcceptInvitation,
+      ),
+  },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: '**', redirectTo: 'login' },

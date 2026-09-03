@@ -1,0 +1,78 @@
+<div class="min-h-screen bg-[#F4F6FB] flex flex-col items-center justify-center p-6">
+
+  <!-- Logo -->
+  <div class="flex items-center gap-2 mb-8">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#003D9B" stroke-width="2.5"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path
+        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+    </svg>
+    <span class="text-xl font-black text-[#041B3C] tracking-tight">TASKLY</span>
+  </div>
+
+  <!-- Card -->
+  <div
+    class="bg-white rounded-lg shadow-md shadow-blue-900/5 border-t-4 border-t-[#0052CC] w-full max-w-120 p-8 md:p-10 text-center animate-fade-in-up">
+
+    <!-- Auth Checking / Loading State -->
+    @if (isCheckingAuth || isAccepting) {
+      <div class="flex flex-col items-center justify-center py-8">
+        <div class="w-10 h-10 border-4 border-slate-100 border-t-[#0052CC] rounded-full animate-spin mb-6"></div>
+        <p
+          class="text-slate-500 font-medium">{{ isCheckingAuth ? 'Verifying secure session...' : 'Joining project...' }}</p>
+      </div>
+    } @else if (errorMessage) {
+      <!-- Error State -->
+      <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+             stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h1 class="text-[24px] font-bold text-[#041B3C] mb-3 leading-tight">Invitation Error</h1>
+      <p class="text-slate-500 mb-8">{{ errorMessage }}</p>
+      <button (click)="goToDashboard()"
+              class="w-full bg-[#E8EDF9] hover:bg-[#D7E2FF] text-[#0052CC] py-3.5 rounded-lg font-bold transition-colors cursor-pointer">
+        Return to Dashboard
+      </button>
+    } @else if (isSuccess) {
+      <!-- Success State -->
+      <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h1 class="text-[24px] font-bold text-[#041B3C] mb-3 leading-tight">Project Joined!</h1>
+      <p class="text-slate-500 mb-8">You have successfully accepted the invitation.</p>
+      <button (click)="goToDashboard()"
+              class="w-full bg-[#0052CC] hover:bg-blue-800 text-white py-3.5 rounded-lg font-bold shadow-md shadow-blue-900/20 transition-colors cursor-pointer">
+        Open Project
+      </button>
+    } @else {
+      <!-- Accept Invitation -->
+      <div
+        class="inline-flex items-center gap-1.5 bg-[#E0E8FF] text-[#434654] px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">
+        <svg width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M5.25 7.58333H9.91667V7.2625C9.91667 6.825 9.70278 6.47743 9.275 6.21979C8.84722 5.96215 8.28333 5.83333 7.58333 5.83333C6.88333 5.83333 6.31944 5.96215 5.89167 6.21979C5.46389 6.47743 5.25 6.825 5.25 7.2625V7.58333ZM7.58333 5.25C7.90417 5.25 8.17882 5.13576 8.40729 4.90729C8.63576 4.67882 8.75 4.40417 8.75 4.08333C8.75 3.7625 8.63576 3.48785 8.40729 3.25938C8.17882 3.0309 7.90417 2.91667 7.58333 2.91667C7.2625 2.91667 6.98785 3.0309 6.75938 3.25938C6.5309 3.48785 6.41667 3.7625 6.41667 4.08333C6.41667 4.40417 6.5309 4.67882 6.75938 4.90729C6.98785 5.13576 7.2625 5.25 7.58333 5.25ZM1.16667 9.33333C0.845833 9.33333 0.571181 9.2191 0.342708 8.99063C0.114236 8.76215 0 8.4875 0 8.16667V1.16667C0 0.845833 0.114236 0.571181 0.342708 0.342708C0.571181 0.114236 0.845833 0 1.16667 0H4.66667L5.83333 1.16667H10.5C10.8208 1.16667 11.0955 1.2809 11.324 1.50937C11.5524 1.73785 11.6667 2.0125 11.6667 2.33333V8.16667C11.6667 8.4875 11.5524 8.76215 11.324 8.99063C11.0955 9.2191 10.8208 9.33333 10.5 9.33333H1.16667ZM1.16667 8.16667H10.5V2.33333H5.35208L4.18542 1.16667H1.16667V8.16667ZM1.16667 8.16667V1.16667V2.33333V8.16667Z"
+            fill="#434654"/>
+        </svg>
+
+        New Project Invitation
+      </div>
+      <h1 class="text-[26px] font-bold text-[#041B3C] mb-8 leading-tight px-4">
+        You've been invited to join a new project
+      </h1>
+      <button (click)="acceptInvite()"
+              class="w-full bg-[#0052CC] hover:bg-blue-800 text-white py-3.5 rounded-lg font-bold shadow-blue-900/20 transition-transform active:scale-[0.98] cursor-pointer">
+        Accept Invitation
+      </button>
+    }
+  </div>
+</div>

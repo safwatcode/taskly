@@ -210,8 +210,9 @@
       }
       @if (task.assignee) {
         <div class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm"
-             [ngClass]="getAvatarColorClass(task.assignee.name)" [title]="task.assignee.name || task.assignee.email">
-          {{ getInitials(task.assignee.name) }}
+             [ngClass]="getAvatarColorClass(task.assignee.name || task.assignee.email)"
+             [title]="task.assignee.name || task.assignee.email">
+          {{ getInitials(task.assignee.name || task.assignee.email) }}
         </div>
       }
     </div>
@@ -373,8 +374,8 @@
                       @if (task.assignee) {
                         <div
                           class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
-                          [ngClass]="getAvatarColorClass(task.assignee.name)">
-                          {{ getInitials(task.assignee.name) }}
+                          [ngClass]="getAvatarColorClass(task.assignee.name || task.assignee.email)">
+                          {{ getInitials(task.assignee.name || task.assignee.email) }}
                         </div>
                         <span
                           class="text-[13px] font-medium text-[#041B3C]">{{ task.assignee.name || task.assignee.email || "Unassigned" }}</span>
@@ -470,8 +471,8 @@
               <div class="flex items-center gap-3">
                 @if (task.assignee) {
                   <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
-                       [ngClass]="getAvatarColorClass(task.assignee.name)">
-                    {{ getInitials(task.assignee.name) }}
+                       [ngClass]="getAvatarColorClass(task.assignee.name || task.assignee.email)">
+                    {{ getInitials(task.assignee.name || task.assignee.email) }}
                   </div>
                 } @else {
                   <div

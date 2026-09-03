@@ -252,15 +252,15 @@
               <div class="flex items-center gap-3 mt-auto">
                 <div
                   class="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0 border border-white/50"
-                  [ngClass]="getAvatarColorClass(epic.assignee?.name)">
-                  {{ getInitials(epic.assignee?.name) }}
+                  [ngClass]="getAvatarColorClass(epic.assignee?.name || epic.assignee?.email)">
+                  {{ getInitials(epic.assignee?.name || epic.assignee?.email) }}
                 </div>
                 <div class="flex flex-col truncate w-full pr-2">
                   <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Assignee</span>
                   <span
                     class="text-sm font-medium text-[#041B3C] truncate block w-full"
-                    [title]="epic.assignee?.name || 'Unassigned'">
-                    {{ epic.assignee?.name || 'Unassigned' }}
+                    [title]="epic.assignee?.name || epic.assignee?.email || 'Unassigned'">
+                    {{ epic.assignee?.name || epic.assignee?.email || 'Unassigned' }}
                   </span>
                 </div>
               </div>
@@ -275,8 +275,9 @@
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
                   <span class="truncate">Created by: <span
-                    class="font-medium text-slate-600" [title]="epic.created_by?.name || 'System'">
-                    {{ epic.created_by?.name || 'System' }}
+                    class="font-medium text-slate-600"
+                    [title]="epic.created_by?.name || epic.created_by?.email || 'System'">
+                    {{ epic.created_by?.name || epic.created_by?.email || 'System' }}
                   </span></span>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">

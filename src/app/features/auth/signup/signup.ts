@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { InputField } from '../../../shared/components/input/input';
 import { Button } from '../../../shared/components/button/button';
 import { Auth } from '../../../core/auth/services/auth';
@@ -38,6 +38,7 @@ export class Signup implements OnInit {
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(Auth);
   private cdr = inject(ChangeDetectorRef); // Injected for manual UI updates
   private destroyRef = inject(DestroyRef); // Injected to manage memory cleanup
@@ -114,7 +115,17 @@ export class Signup implements OnInit {
           if (res.access_token) {
             this.authService.saveSession(res.access_token, false);
             this.cdr.detectChanges();
-            this.router.navigate(['/project']);
+
+            // Return URL Routing
+            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+            if (returnUrl) {
+              // Redirect to the stored URL (e.g., the invite page)
+              this.router.navigateByUrl(returnUrl);
+            } else {
+              // Fallback to default project dashboard
+              this.router.navigate(['/project']);
+            }
           } else {
             // In case of email verification process
             console.warn(
