@@ -99,3 +99,35 @@ export interface BoardColumn {
   isFetchingMore?: boolean;
   loadingMoreError?: boolean;
 }
+
+// My Statistics Dashboard Models
+export interface TasksCalendarStatsRequest {
+  p_start_date: string;
+  p_end_date: string;
+  p_project_id?: string | null;
+  p_status?: string | null;
+}
+
+export interface DailyStat {
+  day: string;
+  statuses: Record<string, number>;
+}
+
+export interface TasksCalendarStatsResponse {
+  daily: DailyStat[];
+  totals: Record<string, number>;
+  total_tasks: number;
+  done_tasks: number;
+  overdue_tasks: number;
+}
+
+export interface TasksCountPerProjectRequest {
+  p_start_date: string;
+  p_end_date: string;
+}
+
+export interface ProjectTaskCountResponse {
+  project_id: string;
+  project_name: string;
+  tasks_count: number;
+}

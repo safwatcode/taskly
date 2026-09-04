@@ -1,0 +1,389 @@
+<div class="flex flex-col flex-1 h-full overflow-y-auto bg-slate-50">
+
+  <!-- Loading Overlay -->
+  @if (isLoading()) {
+    <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm">
+      <div class="w-10 h-10 border-4 border-slate-200 border-t-[#003D9B] rounded-full animate-spin"></div>
+    </div>
+  }
+
+  <div class="p-4 mx-auto w-full flex flex-col gap-6 md:gap-8">
+
+    <!-- Header & Filters Row -->
+    <div class="flex flex-col justify-between items-start gap-4 ">
+
+      <!-- Titles -->
+      <div>
+        <h1 class="text-2xl md:text-[28px] font-bold text-[#041B3C] tracking-tight mb-1">Weekly Planner</h1>
+        <p class="text-slate-500 text-sm">Manage your deadlines and track team velocity.</p>
+      </div>
+
+      <!-- Filters -->
+      <form [formGroup]="filterForm"
+            class="w-full flex md:flex-row flex-col-reverse items-center justify-between gap-3 bg-[#F1F3FF] p-4">
+
+        <!-- Date Range Picker -->
+        <div class="dropdown-container relative w-full md:w-auto">
+
+          <div
+            class="w-full flex items-center justify-center gap-3 text-[#041B3C] text-[17px] font-bold px-4 py-2.5 outline-none border-none whitespace-nowrap">
+
+            <!-- Left Arrow (Previous Range) -->
+            <button type="button" (click)="shiftDateRange(-1, $event)"
+                    class="cursor-pointer p-1.5 hover:bg-slate-200 rounded-md transition-colors flex items-center justify-center">
+              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 12L0 6L6 0L7.4 1.4L2.8 6L7.4 10.6L6 12Z" fill="#041B3C"/>
+              </svg>
+            </button>
+
+            <!-- Center Date Picker -->
+            <div
+              (click)="toggleDatePicker()" class="cursor-pointer  transition-colors">
+              <span class="md:hidden">{{ filterForm.value.startDate | date:'MMM dd' }}
+                - {{ filterForm.value.endDate | date:'MMM dd' }}</span>
+              <span class="hidden md:block">{{ filterForm.value.startDate | date:'MMM dd' }}
+                - {{ filterForm.value.endDate | date:'MMM dd, yyyy' }}</span>
+            </div>
+
+            <!-- Right Arrow (Next Range) -->
+            <button type="button" (click)="shiftDateRange(1, $event)"
+                    class="cursor-pointer p-1.5 hover:bg-slate-200 rounded-md transition-colors flex items-center justify-center">
+              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.6 6L0 1.4L1.4 0L7.4 6L1.4 12L0 10.6L4.6 6Z" fill="#041B3C"/>
+              </svg>
+            </button>
+
+          </div>
+
+          @if (isDateDropdownOpen()) {
+            <!-- Calendar Popup -->
+            <div
+              class="absolute top-[calc(100%+8px)] left-0  md:right-0 w-[320px] bg-white border border-slate-100 rounded-lg shadow-sm z-50 p-5 animate-fade-in-up origin-top">
+
+              <!-- Month/Year Header & Controls -->
+              <div class="flex justify-between items-center mb-5">
+                <span class="text-[17px] font-bold text-[#041B3C]">{{ currentViewDate() | date:'MMMM yyyy' }}</span>
+                <div class="flex gap-4 text-[#041B3C]">
+                  <button type="button" (click)="prevMonth()"
+                          class="cursor-pointer hover:bg-slate-100 p-1.5 rounded-md transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button type="button" (click)="nextMonth()"
+                          class="cursor-pointer hover:bg-slate-100 p-1.5 rounded-md transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Weekday Headers -->
+              <div class="grid grid-cols-7 mb-2">
+                @for (day of weekDays; track day) {
+                  <div class="text-center text-[11px] font-bold text-slate-400 uppercase">{{ day }}</div>
+                }
+              </div>
+
+              <!-- Days Grid -->
+              <div class="grid grid-cols-7 px-1">
+                @for (day of calendarDays; track day.date.toISOString()) {
+                  <div
+                    [class]="getDayClasses(day)" (click)="onDateClick(day)">
+                    {{ day.date | date:'d' }}
+                  </div>
+                }
+              </div>
+
+              <!-- Validation Error -->
+              @if (dateRangeError()) {
+                <div class="text-xs text-red-500 font-bold bg-red-50 px-3 py-2 rounded-md mb-4 text-center">
+                  Range cannot exceed 7 days
+                </div>
+              }
+
+              <!-- Actions -->
+              <div class="flex gap-3 pt-4 border-t border-slate-100">
+                <button type="button" (click)="isDateDropdownOpen.set(false)"
+                        class="flex-1 py-2 cursor-pointer text-[13px] font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                  Cancel
+                </button>
+                <button type="button" (click)="applyCustomRange()"
+                        [disabled]="dateRangeError() || !tempStartDate() || !tempEndDate()"
+                        class="flex-1 py-2 cursor-pointer text-[13px] font-bold text-white bg-[#0052CC] rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                  Apply Range
+                </button>
+              </div>
+
+            </div>
+          }
+        </div>
+
+        <!-- Projects and Statuses Dropdown menus-->
+        <div class="flex items-center jusify-center gap-2">
+          <!-- Project Dropdown -->
+          <div class="dropdown-container relative w-full md:w-48">
+            <button type="button" (click)="isProjectDropdownOpen.set(!isProjectDropdownOpen())"
+                    class="w-full flex items-center justify-between gap-2 cursor-pointer bg-white text-slate-700 text-sm font-medium rounded-lg px-4 py-2.5 outline-none border border-slate-200 hover:bg-slate-50 transition-colors">
+              <span class="truncate">{{ getSelectedProjectName() }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 shrink-0">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            @if (isProjectDropdownOpen()) {
+              <div
+                class="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-slate-100 rounded-lg shadow-sm z-50 py-1.5 max-h-60 overflow-y-auto animate-fade-in-up origin-top">
+                <div (click)="setFilter('project', null)"
+                     class="px-4 py-2 text-sm text-slate-700 hover:bg-[#E8EDF9] hover:text-[#0052CC] cursor-pointer transition-colors font-medium">
+                  All Projects
+                </div>
+                <div class="h-px bg-slate-100 my-1"></div>
+                @for (proj of projectsList(); track proj.id) {
+                  <div (click)="setFilter('project', proj.id)"
+                       class="px-4 py-2 text-sm text-slate-700 hover:bg-[#E8EDF9] hover:text-[#0052CC] cursor-pointer transition-colors truncate">
+                    {{ proj.name }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Statuses Dropdown -->
+          <div class="dropdown-container relative flex-1 md:flex-none md:w-40">
+            <button type="button" (click)="isStatusDropdownOpen.set(!isStatusDropdownOpen())"
+                    class="w-full flex items-center justify-between gap-2 cursor-pointer bg-white text-slate-700 text-sm font-medium rounded-lg px-4 py-2.5 outline-none border border-slate-200 hover:bg-slate-50 transition-colors">
+              <span
+                class="truncate">{{ filterForm.value.status ? formatStatus(filterForm.value.status) : 'All Statuses' }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 shrink-0">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            @if (isStatusDropdownOpen()) {
+              <div
+                class="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-slate-100 rounded-lg shadow-xl z-50 py-1.5 animate-fade-in-up origin-top">
+                <div (click)="setFilter('status', null)"
+                     class="px-4 py-2 text-sm text-slate-700 hover:bg-[#E8EDF9] hover:text-[#0052CC] cursor-pointer transition-colors font-medium">
+                  All Statuses
+                </div>
+                <div class="h-px bg-slate-100 my-1"></div>
+                @for (status of availableStatuses; track status) {
+                  <div (click)="setFilter('status', status)"
+                       class="px-4 py-2 text-sm text-slate-700 hover:bg-[#E8EDF9] hover:text-[#0052CC] cursor-pointer transition-colors">
+                    {{ formatStatus(status) }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+
+      </form>
+    </div>
+
+    <!-- Overview KPIs -->
+    <div>
+      <h2 class="text-[11px] md:hidden font-bold text-slate-400 uppercase tracking-widest mb-3">Quick Overview</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+
+        <!-- Total Tasks -->
+        <div class="bg-white rounded-lg p-5 border border-slate-100 flex justify-between items-center">
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Tasks</span>
+            <span class="text-4xl font-bold text-[#041B3C]">{{ totalTasks() }}</span>
+          </div>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="2" fill="#0052CC" fill-opacity="0.1"/>
+            <path
+              d="M17 34C16.45 34 15.9792 33.8042 15.5875 33.4125C15.1958 33.0208 15 32.55 15 32V18C15 17.45 15.1958 16.9792 15.5875 16.5875C15.9792 16.1958 16.45 16 17 16H21.2C21.4167 15.4 21.7792 14.9167 22.2875 14.55C22.7958 14.1833 23.3667 14 24 14C24.6333 14 25.2042 14.1833 25.7125 14.55C26.2208 14.9167 26.5833 15.4 26.8 16H31C31.55 16 32.0208 16.1958 32.4125 16.5875C32.8042 16.9792 33 17.45 33 18V32C33 32.55 32.8042 33.0208 32.4125 33.4125C32.0208 33.8042 31.55 34 31 34H17ZM17 32H31V18H17V32ZM19 30H26V28H19V30ZM19 26H29V24H19V26ZM19 22H29V20H19V22ZM24 17.25C24.2167 17.25 24.3958 17.1792 24.5375 17.0375C24.6792 16.8958 24.75 16.7167 24.75 16.5C24.75 16.2833 24.6792 16.1042 24.5375 15.9625C24.3958 15.8208 24.2167 15.75 24 15.75C23.7833 15.75 23.6042 15.8208 23.4625 15.9625C23.3208 16.1042 23.25 16.2833 23.25 16.5C23.25 16.7167 23.3208 16.8958 23.4625 17.0375C23.6042 17.1792 23.7833 17.25 24 17.25ZM17 32V18V32Z"
+              fill="#0052CC"/>
+          </svg>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="bg-white rounded-lg p-5 border border-slate-100 flex justify-between items-center">
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Completed</span>
+            <span class="text-4xl font-bold text-[#041B3C]">{{ completedTasks() }}</span>
+          </div>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="2" fill="#006844" fill-opacity="0.1"/>
+            <path
+              d="M22.6 28.6L29.65 21.55L28.25 20.15L22.6 25.8L19.75 22.95L18.35 24.35L22.6 28.6ZM24 34C22.6167 34 21.3167 33.7375 20.1 33.2125C18.8833 32.6875 17.825 31.975 16.925 31.075C16.025 30.175 15.3125 29.1167 14.7875 27.9C14.2625 26.6833 14 25.3833 14 24C14 22.6167 14.2625 21.3167 14.7875 20.1C15.3125 18.8833 16.025 17.825 16.925 16.925C17.825 16.025 18.8833 15.3125 20.1 14.7875C21.3167 14.2625 22.6167 14 24 14C25.3833 14 26.6833 14.2625 27.9 14.7875C29.1167 15.3125 30.175 16.025 31.075 16.925C31.975 17.825 32.6875 18.8833 33.2125 20.1C33.7375 21.3167 34 22.6167 34 24C34 25.3833 33.7375 26.6833 33.2125 27.9C32.6875 29.1167 31.975 30.175 31.075 31.075C30.175 31.975 29.1167 32.6875 27.9 33.2125C26.6833 33.7375 25.3833 34 24 34ZM24 32C26.2333 32 28.125 31.225 29.675 29.675C31.225 28.125 32 26.2333 32 24C32 21.7667 31.225 19.875 29.675 18.325C28.125 16.775 26.2333 16 24 16C21.7667 16 19.875 16.775 18.325 18.325C16.775 19.875 16 21.7667 16 24C16 26.2333 16.775 28.125 18.325 29.675C19.875 31.225 21.7667 32 24 32Z"
+              fill="#004E32"/>
+          </svg>
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div class="bg-white rounded-lg p-5 border border-slate-100 flex justify-between items-center">
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Overdue</span>
+            <span class="text-4xl font-bold text-[#BA1A1A]">{{ overdueTasks() }}</span>
+          </div>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="2" fill="#FFDAD6" fill-opacity="0.2"/>
+            <path
+              d="M13 33.5L24 14.5L35 33.5H13ZM16.45 31.5H31.55L24 18.5L16.45 31.5ZM24 30.5C24.2833 30.5 24.5208 30.4042 24.7125 30.2125C24.9042 30.0208 25 29.7833 25 29.5C25 29.2167 24.9042 28.9792 24.7125 28.7875C24.5208 28.5958 24.2833 28.5 24 28.5C23.7167 28.5 23.4792 28.5958 23.2875 28.7875C23.0958 28.9792 23 29.2167 23 29.5C23 29.7833 23.0958 30.0208 23.2875 30.2125C23.4792 30.4042 23.7167 30.5 24 30.5ZM23 27.5H25V22.5H23V27.5Z"
+              fill="#BA1A1A"/>
+          </svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Calendar View Grid -->
+    <div>
+      <h2 class="text-[15px] font-bold text-[#041B3C] mb-4 md:hidden">Calendar</h2>
+
+      <div class="flex flex-col md:grid md:grid-cols-7 gap-3 md:min-h-100">
+
+        <!-- Looping over the Signal and track by string -->
+        @for (dayObj of processedCalendarDays(); track dayObj.dateString; let isFirst = $first; let isLast = $last) {
+
+          <!-- Day Column -->
+          <div
+            class="p-4 md:p-3 flex md:flex-col border-b md:border-b-0 rounded-lg shadow-sm bg-white md:border-r border-slate-100 md:last:border-r-0 relative transition-colors"
+            [ngClass]="{
+                 'ring-2 ring-[#0052CC] md:rounded-lg md:scale-[1.02] z-10 shadow-sm md:shadow-sm': dayObj.isToday,
+                 'md:rounded-l-2xl': isFirst && !dayObj.isToday,
+                 'md:rounded-r-2xl': isLast && !dayObj.isToday
+               }">
+
+            <!-- "TODAY" Floating Pill -->
+            @if (dayObj.isToday) {
+              <div
+                class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0052CC] text-white text-[9px] font-bold tracking-widest px-3 py-1 rounded-full uppercase z-20 shadow-md">
+                Today
+              </div>
+            }
+
+            <!-- Date Headers -->
+            <div class="w-16 shrink-0 md:w-full flex flex-col md:items-start mb-0 md:mb-4 pt-1">
+              <span
+                class="text-[10px] md:text-xs font-bold text-slate-400 uppercase md:mb-0.5">{{ dayObj.date | date:'EEE' }}</span>
+              <span class="text-xl md:text-[20px] font-bold text-[#041B3C]">{{ dayObj.date | date:'dd' }}
+                <span class="md:hidden">{{ dayObj.date | date:'MMM' }}</span>
+                <span class="hidden md:inline pl-1">{{ dayObj.date | date:'MMM' }}</span>
+              </span>
+            </div>
+
+            <!-- Status Pills Container -->
+            <div class="flex-1 flex flex-wrap md:flex-col items-center md:items-stretch gap-2 ml-4 md:ml-0 md:pt-2">
+
+              @if (dayObj.isEmpty) {
+                <div class="md:h-full flex flex-col gap-3 items-center justify-center text-slate-300 py-2 md:py-10">
+                  <svg class="opacity-30" width="27" height="30" viewBox="0 0 27 30" fill="none"
+                       xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M10.05 25.05L7.95 22.95L11.4 19.5L7.95 16.05L10.05 13.95L13.5 17.4L16.95 13.95L19.05 16.05L15.6 19.5L19.05 22.95L16.95 25.05L13.5 21.6L10.05 25.05ZM3 30C2.175 30 1.46875 29.7062 0.88125 29.1187C0.29375 28.5312 0 27.825 0 27V6C0 5.175 0.29375 4.46875 0.88125 3.88125C1.46875 3.29375 2.175 3 3 3H4.5V0H7.5V3H19.5V0H22.5V3H24C24.825 3 25.5312 3.29375 26.1187 3.88125C26.7062 4.46875 27 5.175 27 6V27C27 27.825 26.7062 28.5312 26.1187 29.1187C25.5312 29.7062 24.825 30 24 30H3ZM3 27H24V12H3V27ZM3 9H24V6H3V9ZM3 9V6V9Z"
+                      fill="#041B3C"/>
+                  </svg>
+                  <span class="text-xs font-medium md:text-xs md:font-bold uppercase tracking-widest text-slate-300">No Tasks</span>
+                </div>
+              }
+
+              @for (stat of dayObj.stats; track stat.key) {
+                <!-- Desktop Pill -->
+                <div
+                  class="hidden md:flex justify-between items-center px-2 py-1.5 rounded-md text-[10px] font-bold tracking-wide"
+                  [ngClass]="getStatusColor(stat.key).bg + ' ' + getStatusColor(stat.key).text">
+                  <span class="uppercase truncate mr-2">{{ formatStatus(stat.key) }}</span>
+                  <span class="text-xs">{{ stat.value }}</span>
+                </div>
+
+                <!-- Mobile Pill -->
+                <div class="md:hidden w-7 h-7 rounded flex items-center justify-center text-xs font-bold"
+                     [ngClass]="getStatusColor(stat.key).bg + ' ' + getStatusColor(stat.key).text">
+                  {{ stat.value }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Analytics Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 pb-2">
+
+      <!-- Tasks by Status Doughnut Chart -->
+      <div class="bg-white rounded-lg p-6 border border-slate-100 flex flex-col">
+        <h3 class="text-[17px] font-bold text-[#041B3C] mb-8">Tasks by Status</h3>
+
+        <div class="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 flex-1">
+
+          <div class="relative w-48 h-48 shrink-0">
+            <!-- Center Text -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span class="text-[32px] font-bold text-[#041B3C] leading-none">{{ totalTasks() }}</span>
+              <span class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Total</span>
+            </div>
+            <!-- Canvas -->
+            <canvas baseChart [data]="doughnutChartData" [options]="doughnutChartOptions"
+                    [type]="doughnutChartType"></canvas>
+          </div>
+
+          <!-- Legend List with Progress Bars -->
+          <div class="w-full md:w-auto space-y-4">
+            @for (item of chartLegend(); track item.label) {
+              <div class="flex items-start gap-3 text-sm">
+
+                <!-- Dot -->
+                <div class="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" [style.background-color]="item.color"></div>
+
+                <!-- Text and Progress Bar Container -->
+                <div class="flex-1 flex flex-col gap-1.5 w-full md:min-w-30">
+
+                  <!-- Label and Value -->
+                  <div class="flex justify-between items-center gap-6">
+                    <span class="text-[#041B3C] font-semibold">{{ item.label }}</span>
+                    <span class="text-[#041B3C] font-bold">{{ item.value }}</span>
+                  </div>
+
+                  <!-- Progress Bar Track -->
+                  <div class="w-full h-1 bg-[#E8EDF9] rounded-full overflow-hidden">
+                    <!-- Progress Bar Fill -->
+                    <div class="h-full rounded-full transition-all duration-500 ease-out"
+                         [style.width.%]="item.percentage"
+                         [style.background-color]="item.color"></div>
+                  </div>
+
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- All Projects List -->
+      <div class="bg-white rounded-lg p-6 border border-slate-100 flex flex-col h-80">
+        <h3 class="text-[17px] font-bold text-[#041B3C] mb-6 shrink-0">All Projects</h3>
+
+        <div class="flex-1 overflow-y-auto pr-2 space-y-4">
+          @if (projectsCount().length === 0) {
+            <div class="h-full flex items-center justify-center text-slate-400 text-sm font-medium">
+              No projects active in this date range.
+            </div>
+          }
+
+          @for (proj of projectsCount(); track proj.project_id) {
+            <div class="flex items-center justify-between group">
+              <span class="text-sm font-bold text-[#041B3C] truncate pr-4">{{ proj.project_name }}</span>
+              <span
+                class="text-xs font-bold text-[#041B3C] px-2.5 py-1 rounded-md shrink-0">{{ proj.tasks_count }}
+                Tasks</span>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

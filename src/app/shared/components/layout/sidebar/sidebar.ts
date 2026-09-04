@@ -82,8 +82,7 @@ export class Sidebar implements OnInit {
           this.authService.clearSession();
           this.router.navigate(['/login']);
         },
-        error: (err) => {
-          console.error('Logout failed', err);
+        error: () => {
           this.logoutError.set('Logout failed, please try again.');
         },
       });

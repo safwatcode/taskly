@@ -15,8 +15,12 @@ import {
   ProjectMemberResponse,
   ProjectPayload,
   ProjectResponse,
+  ProjectTaskCountResponse,
   ProjectTaskResponse,
   TaskPayload,
+  TasksCalendarStatsRequest,
+  TasksCalendarStatsResponse,
+  TasksCountPerProjectRequest,
 } from '../models/project.model';
 import { environment } from '../../../../environments/environment';
 
@@ -37,6 +41,8 @@ export class ProjectService {
   private rpcProjectMembersURL = `${this.baseURL}/rest/v1/get_project_members`;
   private rpcInviteMemberURL = `${this.baseURL}/rest/v1/rpc/invite_member`;
   private rpcAcceptInvitationURL = `${this.baseURL}/rest/v1/rpc/accept_invitation`;
+  private rpcTasksCalendarStatsURL = `${this.baseURL}/rest/v1/rpc/get_tasks_calendar_stats`;
+  private rpcTasksCountPerProjectURL = `${this.baseURL}/rest/v1/rpc/get_tasks_count_per_project`;
 
   // Global name caching
   private userNameCache = new Map<string, string>();
@@ -292,6 +298,22 @@ export class ProjectService {
 
   acceptInvitation(token: string): Observable<any> {
     return this.http.post(`${this.rpcAcceptInvitationURL}`, { p_token: token });
+  }
+
+  getTasksCalendarStats(
+    payload: TasksCalendarStatsRequest,
+  ): Observable<TasksCalendarStatsResponse> {
+    return this.http
+      .post<TasksCalendarStatsResponse>(this.rpcTasksCalendarStatsURL, payload)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getTasksCountPerProject(
+    payload: TasksCountPerProjectRequest,
+  ): Observable<ProjectTaskCountResponse[]> {
+    return this.http
+      .post<ProjectTaskCountResponse[]>(this.rpcTasksCountPerProjectURL, payload)
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

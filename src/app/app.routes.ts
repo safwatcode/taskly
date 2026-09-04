@@ -79,6 +79,11 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'my-statistics',
+        loadComponent: () =>
+          import('./features/my-statistics/my-statistics').then((m) => m.MyStatistics),
+      },
       { path: '', redirectTo: 'project', pathMatch: 'full' },
     ],
   },
@@ -89,6 +94,7 @@ export const routes: Routes = [
         (m) => m.AcceptInvitation,
       ),
   },
+
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: '**', redirectTo: 'login' },
